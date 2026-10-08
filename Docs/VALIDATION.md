@@ -1,5 +1,16 @@
 # Validation record
 
+## 1.4.4 local release packages — build 9
+
+Prepared on **2026-10-08**, Asia/Kolkata, on Apple Silicon. Both architecture packages were compiled and packaged with `./Scripts/package.sh`. Bundle version/build (**1.4.4 / 9**), strict ad-hoc signatures, archive contents, extracted executable equality, and ZIP SHA-256 values were verified. `git diff --check` passed. Intel was cross-compiled and has not been run on physical Intel hardware.
+
+| Package | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `SpotMenu-1.4.4-macos-arm64.zip` | 2708847 | `d8e58e8098c75b74cf2c09f7a4b13e08c47a15724f1a2dd6b170b69a5ee0c565` |
+| `SpotMenu-1.4.4-macos-x86_64.zip` | 2756809 | `e7f07533783474273b69f4cd6f274a3a318be73770efc41c9ee4da294eaad1aa` |
+
+The regression harness was not run for the 1.4.4 changes. Dynamic OAuth still needs a live Spotify Dashboard authorization check after registering `http://127.0.0.1/callback` without a port. Real liked-song playback, clean installation, and physical Intel runtime remain unverified. Packages are ad-hoc signed and not notarized.
+
 ## Published v1.4.3 — build 8
 
 Published on **2026-10-01**, Asia/Calcutta, as the [latest GitHub release](https://github.com/heyaaakash/spotify-mac-menu/releases/tag/v1.4.3). The final repository check reports public visibility (the pre-release check reported private). Annotated tag `v1.4.3` points to clean release commit `f6663fe1739062588a73ddd1ab0cdeedee6c03c5`; the tag was pushed before uploading assets.

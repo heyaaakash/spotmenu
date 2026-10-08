@@ -38,7 +38,7 @@ import Security
     let player: PlayerState
     let preferences: AppPreferences
 
-    private let redirect = "http://127.0.0.1:8888/callback"
+    private var callbackRedirect: String?
     private let scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-library-modify playlist-read-private playlist-read-collaborative user-read-recently-played user-top-read"
     private let session: URLSession
     private let cache: LibraryCache
@@ -52,6 +52,8 @@ import Security
     private var verifier: String?
     private var expectedState: String?
     private var listener: NWListener?
+    private var listenerStopTask: Task<Void, Never>?
+    private var listenerStartTask: Task<Void, Never>?
     private var authorizationTask: Task<Void, Never>?
     private var authorizationRevision = 0
     private var searchTask: Task<Void, Never>?
@@ -120,43 +122,105 @@ import Security
         let trimmed = clientID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { error = "Enter your Spotify developer app's Client ID."; return }
         defaults.set(trimmed, forKey: "spotifyClientID"); clientID = trimmed
-        do {
-            let parameters = NWParameters.tcp
-            parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: 8888)
-            listener = try NWListener(using: parameters, on: 8888)
-        } catch { self.error = "Port 8888 is in use. Close the other app and try again."; return }
         connecting = true
+        error = nil
+        authorizationRevision += 1
+        let revision = authorizationRevision
         let verifier = randomURLSafe(64), state = randomURLSafe(24)
         self.verifier = verifier; expectedState = state
-        listener?.newConnectionHandler = { [weak self] connection in
+        listenerStartTask = Task { [weak self] in
+            guard let self else { return }
+            if let listenerStopTask { await listenerStopTask.value }
+            guard !Task.isCancelled, revision == authorizationRevision, connecting else { return }
+            listenerStartTask = nil
+            startCallbackListener(clientID: trimmed, verifier: verifier, state: state, revision: revision)
+        }
+    }
+    private func startCallbackListener(clientID: String, verifier: String, state: String, revision: Int) {
+        let callback: NWListener
+        do {
+            let parameters = NWParameters.tcp
+            parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
+            callback = try NWListener(using: parameters, on: .any)
+        } catch {
+            self.error = "Could not start Spotify sign-in. Please try again."
+            connecting = false; self.verifier = nil; expectedState = nil
+            return
+        }
+        listener = callback
+        callback.newConnectionHandler = { [weak self] connection in
             guard let owner = self else { connection.cancel(); return }
             connection.start(queue: .main)
             connection.receive(minimumIncompleteLength: 1, maximumLength: 8192) { data, _, _, _ in
                 guard let data, let request = String(data: data, encoding: .utf8),
                       let path = request.components(separatedBy: " ").dropFirst().first,
-                      let url = URL(string: "http://127.0.0.1:8888" + path), url.path == "/callback" else { connection.cancel(); return }
+                      path.hasPrefix("/callback") else { connection.cancel(); return }
                 let html = "<html><body style='background:#101410;color:white;font:18px system-ui;text-align:center;padding:80px'><h1>Return to SpotMenu</h1><p>You can close this tab. Your menu bar app will finish connecting.</p></body></html>"
                 let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(html.utf8.count)\r\nConnection: close\r\n\r\n" + html
                 connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
-                Task { @MainActor in owner.handleCallback(url) }
+                Task { @MainActor in
+                    guard let redirect = owner.callbackRedirect,
+                          let callbackBase = URL(string: redirect),
+                          let url = URL(string: "http://127.0.0.1:\(callbackBase.port ?? 0)" + path),
+                          url.host == "127.0.0.1", url.port == callbackBase.port, url.path == "/callback" else { return }
+                    owner.handleCallback(url)
+                }
             }
         }
-        listener?.stateUpdateHandler = { [weak self] state in
-            if case .failed = state { Task { @MainActor in self?.connecting = false; self?.error = "Could not open the Spotify callback. Try again." } }
+        callback.stateUpdateHandler = { [weak self, weak callback] listenerState in
+            guard let self, let callback else { return }
+            switch listenerState {
+            case .ready:
+                Task { @MainActor in
+                    guard revision == self.authorizationRevision, self.connecting, self.listener === callback,
+                          let port = callback.port?.rawValue, port != 0 else { return }
+                    let redirect = "http://127.0.0.1:\(port)/callback"
+                    self.callbackRedirect = redirect
+                    var components = URLComponents(string: "https://accounts.spotify.com/authorize")!
+                    components.queryItems = [
+                        .init(name: "response_type", value: "code"), .init(name: "client_id", value: clientID),
+                        .init(name: "scope", value: self.scopes), .init(name: "redirect_uri", value: redirect),
+                        .init(name: "state", value: state), .init(name: "code_challenge_method", value: "S256"),
+                        .init(name: "code_challenge", value: Data(SHA256.hash(data: Data(verifier.utf8))).base64URLEncodedString())
+                    ]
+                    guard let authorizationURL = components.url else {
+                        self.error = "Could not prepare Spotify sign-in. Try again."
+                        self.cancelConnection()
+                        return
+                    }
+                    NSWorkspace.shared.open(authorizationURL)
+                }
+            case .failed:
+                Task { @MainActor in
+                    guard revision == self.authorizationRevision else { return }
+                    self.error = "Could not open the Spotify callback. Try again."
+                    self.cancelConnection()
+                }
+            default: break
+            }
         }
-        listener?.start(queue: .main)
-        var components = URLComponents(string: "https://accounts.spotify.com/authorize")!
-        components.queryItems = [
-            .init(name: "response_type", value: "code"), .init(name: "client_id", value: trimmed),
-            .init(name: "scope", value: scopes), .init(name: "redirect_uri", value: redirect),
-            .init(name: "state", value: state), .init(name: "code_challenge_method", value: "S256"),
-            .init(name: "code_challenge", value: Data(SHA256.hash(data: Data(verifier.utf8))).base64URLEncodedString())
-        ]
-        if let url = components.url { NSWorkspace.shared.open(url) }
+        callback.start(queue: .main)
+    }
+    private func stopCallbackListener() {
+        guard let callback = listener else { return }
+        listener = nil
+        callbackRedirect = nil
+        let previous = listenerStopTask
+        listenerStopTask = Task {
+            if let previous { await previous.value }
+            await withCheckedContinuation { continuation in
+                callback.stateUpdateHandler = { state in
+                    if case .cancelled = state { continuation.resume() }
+                }
+                callback.cancel()
+            }
+        }
     }
     func cancelConnection() {
         authorizationRevision += 1; authorizationTask?.cancel(); authorizationTask = nil
-        listener?.cancel(); listener = nil; connecting = false; verifier = nil; expectedState = nil
+        listenerStartTask?.cancel(); listenerStartTask = nil
+        stopCallbackListener()
+        connecting = false; verifier = nil; expectedState = nil
     }
     private func handleCallback(_ url: URL) {
         guard connecting, authorizationTask == nil else { return }
@@ -164,7 +228,9 @@ import Security
         func value(_ key: String) -> String? { values.first { $0.name == key }?.value }
         guard value("state") == expectedState else { error = "Sign-in state did not match. Please try again."; cancelConnection(); return }
         guard let code = value("code"), let verifier else { error = value("error") ?? "Sign-in was canceled."; cancelConnection(); return }
-        listener?.cancel(); listener = nil
+        let redirect = callbackRedirect
+        stopCallbackListener()
+        guard let redirect else { error = "Spotify sign-in expired. Please try again."; cancelConnection(); return }
         let revision = authorizationRevision
         authorizationTask = Task {
             defer { if revision == authorizationRevision { connecting = false; authorizationTask = nil; self.verifier = nil; expectedState = nil } }

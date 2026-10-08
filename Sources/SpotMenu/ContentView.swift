@@ -168,7 +168,7 @@ private struct BrowseArea: View {
         }
         if preferences.filter == .all || preferences.filter == .songs {
             SectionLabel(title: "Liked songs · \(spotify.saved.count) loaded", icon: "heart.fill").padding(.top, 5)
-            ForEach(Array(spotify.saved.enumerated()), id: \.element.stableID) { index, track in TrackRow(track: track, following: Array(spotify.saved.dropFirst(index + 1).prefix(99))).id("library:saved:\(track.stableID)") }
+            ForEach(Array(spotify.saved.enumerated()), id: \.element.stableID) { _, track in TrackRow(track: track).id("library:saved:\(track.stableID)") }
             if spotify.saved.isEmpty { EmptyCard(title: "A place for your favorites", text: "Tap the heart on a track to save it here.", icon: "heart") }
             if spotify.savedNext != nil { LoadMoreButton(title: "Load more liked songs", loading: spotify.loadingSaved) { Task { await spotify.loadMoreSaved() } }.id("library:moreSaved") }
         }
@@ -314,7 +314,7 @@ private struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("SPOTIFY CLIENT ID").font(.system(size: 9, weight: .bold)).tracking(1.5).foregroundStyle(Palette.green)
                 TextField("Paste your Spotify app Client ID", text: $spotify.clientID).textFieldStyle(.plain).padding(12).background(Palette.raised, in: RoundedRectangle(cornerRadius: 11))
-                Text("Add http://127.0.0.1:8888/callback to your developer app's redirect URIs.").font(.system(size: 11)).foregroundStyle(Palette.muted).fixedSize(horizontal: false, vertical: true)
+                Text("Add http://127.0.0.1/callback (without a port) to your developer app's redirect URIs.").font(.system(size: 11)).foregroundStyle(Palette.muted).fixedSize(horizontal: false, vertical: true)
             }.padding(.top, 17)
             Button { spotify.connect() } label: { HStack { if spotify.connecting { ProgressView().controlSize(.small) }; Text(spotify.connecting ? "Connecting…" : "Connect Spotify"); Image(systemName: "arrow.right") }.font(.system(size: 13, weight: .bold)).foregroundStyle(Palette.onAccent).frame(maxWidth: .infinity).padding(14).background(Palette.green, in: Capsule()) }.buttonStyle(PressStyle()).disabled(spotify.connecting)
             if spotify.connecting { Button("Cancel") { spotify.cancelConnection() }.buttonStyle(.plain).font(.caption).foregroundStyle(Palette.muted) }

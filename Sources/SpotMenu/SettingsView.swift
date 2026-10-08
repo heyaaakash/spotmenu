@@ -40,7 +40,7 @@ struct SettingsView: View {
                     }
 
                     group("Playback", icon: "play.circle") {
-                        setting("Continue searched songs", detail: "Play the rest of the album after a search result. Liked songs and Queue also keep their remaining songs.", value: $preferences.continuousPlayback)
+                        setting("Continue searched songs", detail: "Play the rest of the album after a search result. Queue selections also keep their remaining songs.", value: $preferences.continuousPlayback)
                         VStack(alignment: .leading, spacing: 7) {
                             Label("Similar songs after the collection", systemImage: "sparkles").font(.system(size: 11, weight: .semibold))
                             caption("In Spotify Settings, enable Autoplay on the device playing your music. Spotify chooses the recommendations; SpotMenu cannot change this setting for you.")

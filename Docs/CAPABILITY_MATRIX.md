@@ -1,11 +1,12 @@
 # Capability and validation matrix
 
-Source version: **1.4.3**. This matrix separates implementation, automated checks, and live use. Build or fixture-render success does not establish sign-in, Premium eligibility, real playback, clean installation, or accessibility on every supported Mac.
+Source version: **1.4.4**. This matrix separates implementation, automated checks, and live use. Build or fixture-render success does not establish sign-in, Premium eligibility, real playback, clean installation, or accessibility on every supported Mac.
 
 ## Environments
 
 | Environment | Evidence and limit |
 | --- | --- |
+| Apple Silicon — 1.4.4 local package | Source compiled; arm64 app/ZIP metadata, signature, archive, and checksum passed on 2026-10-08. The regression harness and live Spotify flows were not run for these fixes. See [validation](VALIDATION.md). |
 | Apple Silicon, macOS 27.0.1 — 1.4.3 local | `./Scripts/test.sh` passed all 46 checks on 2026-10-01, including desktop event validation, closed-menu monitoring, queued refreshes, recovery, rate limits, audio analysis, and native view fixtures. Real desktop broadcasts, live sign-in/playback/audio capture, and permission prompts remain unverified. |
 | Apple Silicon, macOS 27.0.1 — 1.3.0 | Existing 30-check harness passed on 2026-09-30 after repository extraction. Presentation/build validation is recorded in [VALIDATION.md](VALIDATION.md). |
 | Historical 1.3.0 hosted checks | Previous Apple Silicon and Intel results are retained in [VALIDATION.md](VALIDATION.md). GitHub Actions is now disabled. |
@@ -17,7 +18,7 @@ Source version: **1.4.3**. This matrix separates implementation, automated check
 
 Historical 1.3.0 hosted evidence predates the optional audio visualizer. Current audio checks are local synthetic/mocked evidence only.
 
-All rows below describe implemented behavior unless marked unsupported. Live Spotify sign-in and playback are **unverified in this release-preparation record**.
+The 1.4.4 OAuth listener and liked-song playback changes are compiled and packaged locally; no regression harness or live Spotify verification has been run for them yet. All rows below describe implemented behavior unless marked unsupported. Live Spotify sign-in and playback are **unverified in this release-preparation record**.
 
 | Feature | Automated evidence | Limits / live validation |
 | --- | --- | --- |
@@ -27,7 +28,7 @@ All rows below describe implemented behavior unless marked unsupported. Live Spo
 | Liked songs, Undo | Current save/check endpoints, rapid heart changes, rollback, stale-check handling | Account permissions and live library changes need checking |
 | Home and library | Paging/deduplication, snapshot restoration, preferences | Contents depend on Spotify app quota mode and access |
 | Search | Debounce, cancellation, stale-result protection | Results and live account restrictions need checking; no search-result pagination |
-| Queue / context continuation | Album/playlist offsets and ordered URI continuation | URI-list continuation contains the selected song plus at most 99 following loaded tracks |
+| Queue / context continuation | Album/playlist offsets and ordered URI continuation | Liked Songs starts the selected track at its album URI offset; Queue continuation contains up to 99 following loaded tracks |
 | Device transfer | Mocked transfer progress and refresh | Real hardware availability, transfer, and restrictions need checking |
 | PKCE and Keychain | Source reviewed; no live authorization test recorded | Browser denial, callback port conflict, token persistence, and reconnect need real-account testing |
 | Desktop Spotify fallback | Disabled-fallback error path is tested | Real Automation allow/deny prompts and Apple Events need testing; basic controls only |

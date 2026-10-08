@@ -4,6 +4,14 @@ Version metadata comes from `VERSION` and `BUILD_NUMBER`. Future immutable relea
 
 ## Unreleased
 
+- (none)
+
+## 1.4.4 — 2026-10-08
+
+- Spotify sign-in selects an available local callback port, preventing another app using port 8888 from blocking connection or reconnection.
+- Spotify authorization opens only after the new callback listener reaches its ready state; stale sign-in attempts cannot launch a browser.
+- Liked Songs starts the selected track from its album at the track URI offset instead of sending up to 100 liked-song URIs as a playback list.
+- Queue selections retain their ordered following tracks; the continuation setting copy now reflects this behavior.
 - Group app output by version and type: architecture-specific bundles, working packages, and verified release snapshots. Keep launch media in `dist/media/` and other non-release deliverables in `dist/other/`, separate from release versions. Build, packaging, and draft-upload scripts share the same paths; isolated builds can use an alternate output root.
 
 ## 1.4.3 — 2026-10-01

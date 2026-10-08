@@ -58,11 +58,11 @@ All previews use fictional sample data. See [screenshots/README.md](screenshots/
 
 ## Get SpotMenu
 
-Download **[SpotMenu v1.4.3](https://github.com/heyaaakash/spotify-mac-menu/releases/tag/v1.4.3)** (build 8):
+Download **[SpotMenu v1.4.4](https://github.com/heyaaakash/spotify-mac-menu/releases/tag/v1.4.4)** (build 9):
 
 | Apple Silicon | Intel | Verification |
 | --- | --- | --- |
-| [arm64 ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.3/SpotMenu-1.4.3-macos-arm64.zip) | [x86_64 ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.3/SpotMenu-1.4.3-macos-x86_64.zip) | [SHA-256 checksums](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.3/SHA256SUMS.txt) |
+| [arm64 ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/SpotMenu-1.4.4-macos-arm64.zip) | [x86_64 ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/SpotMenu-1.4.4-macos-x86_64.zip) | [SHA-256 checksums](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/SHA256SUMS.txt) |
 
 Unzip the download and move `SpotMenu.app` to Applications. Quit an older copy before replacing it. Intel is cross-compiled; physical Intel use and clean installation remain unverified. Repository/release access follows the repository’s visibility.
 
@@ -83,7 +83,7 @@ Spotify’s development-mode rules restrict some playlist content. Sign-in, acti
 ## Connect and use
 
 1. Build and open SpotMenu, then click its music-note icon in the menu bar.
-2. Create a Spotify developer app and register **`http://127.0.0.1:8888/callback`** as its redirect URI.
+2. Create a Spotify developer app and register **`http://127.0.0.1/callback`** as its redirect URI (without a port).
 3. Paste its **Client ID** into SpotMenu and choose **Connect Spotify**. Approve access in your browser.
 4. Start music in Spotify on your Mac or another device, then use SpotMenu’s player.
 
