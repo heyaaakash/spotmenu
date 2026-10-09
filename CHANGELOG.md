@@ -6,12 +6,14 @@ Version metadata comes from `VERSION` and `BUILD_NUMBER`. Future immutable relea
 
 - (none)
 
-## 1.4.4 — 2026-10-08
+## 1.4.4 — 2026-10-09, build 10 (replaces build 9)
 
 - Spotify sign-in selects an available local callback port, preventing another app using port 8888 from blocking connection or reconnection.
 - Spotify authorization opens only after the new callback listener reaches its ready state; stale sign-in attempts cannot launch a browser.
-- Liked Songs starts the selected track from its album at the track URI offset instead of sending up to 100 liked-song URIs as a playback list.
+- Liked Songs starts the selected track at its exact URI position and continues through the following loaded liked tracks.
 - Queue selections retain their ordered following tracks; the continuation setting copy now reflects this behavior.
+- Starting a song from Liked Songs sends the selected track first, followed by the next loaded liked tracks. Shuffle is held off until the selected track is confirmed, then restored; a mismatched start retries the selected URI alone.
+- Build 10 replaces the previously published build 9 assets and tag target.
 - Group app output by version and type: architecture-specific bundles, working packages, and verified release snapshots. Keep launch media in `dist/media/` and other non-release deliverables in `dist/other/`, separate from release versions. Build, packaging, and draft-upload scripts share the same paths; isolated builds can use an alternate output root.
 
 ## 1.4.3 — 2026-10-01

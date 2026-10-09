@@ -6,19 +6,19 @@ Source version: **1.4.4**. This matrix separates implementation, automated check
 
 | Environment | Evidence and limit |
 | --- | --- |
-| Apple Silicon — 1.4.4 release | arm64 package built from the clean tag; archive, signature, metadata, and checksum verified. Regression harness and live Spotify flows were not run for these fixes. See [validation](VALIDATION.md). |
+| Apple Silicon — 1.4.4 build 10 | Replacement package compiled and packaged locally; Liked Songs behavior has not been regression-tested or live-verified. See [validation](VALIDATION.md). |
 | Apple Silicon, macOS 27.0.1 — 1.4.3 local | `./Scripts/test.sh` passed all 46 checks on 2026-10-01, including desktop event validation, closed-menu monitoring, queued refreshes, recovery, rate limits, audio analysis, and native view fixtures. Real desktop broadcasts, live sign-in/playback/audio capture, and permission prompts remain unverified. |
 | Apple Silicon, macOS 27.0.1 — 1.3.0 | Existing 30-check harness passed on 2026-09-30 after repository extraction. Presentation/build validation is recorded in [VALIDATION.md](VALIDATION.md). |
 | Historical 1.3.0 hosted checks | Previous Apple Silicon and Intel results are retained in [VALIDATION.md](VALIDATION.md). GitHub Actions is now disabled. |
 | macOS 14 minimum | Declared in `Package.swift` and the app plist. No clean installation or real-user journey recorded here. |
-| Intel Mac — 1.4.4 | x86_64 release binary cross-compiled locally; ZIP extraction, architecture, plist, signature, bundled license, and SHA-256 verified. Physical Intel runtime is unverified. |
+| Intel Mac — 1.4.4 build 10 | x86_64 release binary cross-compiled locally; ZIP extraction, architecture, plist, signature, bundled license, and SHA-256 verified. Physical Intel runtime is unverified. |
 | Other macOS releases | No complete version/device matrix recorded. |
 
 ## Features
 
 Historical 1.3.0 hosted evidence predates the optional audio visualizer. Current audio checks are local synthetic/mocked evidence only.
 
-The 1.4.4 OAuth listener and liked-song playback changes are compiled and packaged for release; no regression harness or live Spotify verification has been run for them. All rows below describe implemented behavior unless marked unsupported. Live Spotify sign-in and playback are **unverified in this release-preparation record**.
+The 1.4.4 build 10 OAuth and Liked Songs fixes compile and package locally; the regression harness and live Spotify verification were not performed for build 10. All rows below describe implemented behavior unless marked unsupported. Live Spotify sign-in and playback are **unverified in this release-preparation record**.
 
 | Feature | Automated evidence | Limits / live validation |
 | --- | --- | --- |

@@ -1,8 +1,14 @@
 # Validation record
 
-## Published v1.4.4 — build 9
+## 1.4.4 replacement release — build 10
 
-Published on **2026-10-08**, Asia/Kolkata, as the [latest GitHub release](https://github.com/heyaaakash/spotmenu/releases/tag/v1.4.4). Annotated tag `v1.4.4` points to clean release commit `c40c3632d9bae2223c899e2ac2e46dee07966cd5`. GitHub Actions was not used.
+Prepared on **2026-10-09**, Asia/Kolkata, on Apple Silicon. Both architecture packages will be rebuilt from the release commit; app metadata, signatures, archive contents, extracted executables, and checksums will be verified. This authorized replacement updates the existing v1.4.4 tag and GitHub release assets.
+
+The Liked Songs change holds Shuffle off until Spotify confirms the selected track, restores the previous Shuffle setting, and retries the selected URI alone if the URI list starts a different song. The regression harness and live Spotify playback were not verified for build 10.
+
+## Superseded v1.4.4 — build 9 (replaced 2026-10-09)
+
+Published on **2026-10-08**, Asia/Kolkata, as the first published v1.4.4 release (superseded by build 10). Annotated tag `v1.4.4` originally pointed to clean release commit `c40c3632d9bae2223c899e2ac2e46dee07966cd5`. GitHub Actions was not used.
 
 - Both arm64 and x86_64 packages were built from the clean tagged source. Bundle version/build, architecture, plist, ad-hoc signature, archive contents, extracted executable equality, and checksums passed. Intel is cross-compiled; physical Intel runtime is unverified.
 - All five uploaded assets (both ZIPs, `SHA256SUMS.txt`, `BUILD_INFO.txt`, and `RELEASE_NOTES.md`) were downloaded from GitHub and matched byte-for-byte with the local release snapshot.

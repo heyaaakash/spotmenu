@@ -58,7 +58,7 @@ All previews use fictional sample data. See [screenshots/README.md](screenshots/
 
 ## Get SpotMenu
 
-Download **[SpotMenu v1.4.4](https://github.com/heyaaakash/spotify-mac-menu/releases/tag/v1.4.4)** (build 9):
+Download **[SpotMenu v1.4.4](https://github.com/heyaaakash/spotify-mac-menu/releases/tag/v1.4.4)** (build 10):
 
 | Apple Silicon | Intel | Verification |
 | --- | --- | --- |

@@ -641,8 +641,61 @@ import Security
         let mutation = optimistic(.playback) { $0.is_playing = !playing }
         complete(mutation, success: await send(playing ? "/me/player/pause" : "/me/player/play", method: "PUT", localFallback: playing ? "pause" : "play"))
     }
-    func play(_ track: Track, contextURI: String? = nil, following: [Track]? = nil, contextPosition: Int? = nil) async {
-        guard let uri = track.uri else { return }
+    func playLikedSong(_ track: Track) async {
+        let following: [Track]
+        if let index = saved.firstIndex(where: { $0.stableID == track.stableID }) {
+            following = Array(saved.dropFirst(index + 1).prefix(99))
+        } else {
+            following = []
+        }
+
+        // Spotify can shuffle a URI-list launch before honoring its first item.
+        // Hold shuffle off until the selected song is confirmed, then restore it.
+        let restoreShuffle = player.playback?.shuffle_state == true
+        if restoreShuffle, !(await setShuffleState(false)) {
+            let started = await play(track, following: [])
+            if started { _ = await confirmPlaybackStarted(track) }
+            return
+        }
+
+        let started = await play(track, following: following)
+        guard started else {
+            if restoreShuffle { _ = await setShuffleState(true) }
+            return
+        }
+        var confirmed = await confirmPlaybackStarted(track)
+        if confirmed == false {
+            // The list can be rejected or reordered by Spotify; retry the exact URI alone.
+            let retried = await play(track, following: [])
+            if retried { confirmed = await confirmPlaybackStarted(track) }
+        }
+        if restoreShuffle { _ = await setShuffleState(true) }
+        if confirmed == false {
+            showNotice("Spotify couldn’t start that song. It may be unavailable on this device.", icon: "exclamationmark.triangle")
+        }
+    }
+    private func confirmPlaybackStarted(_ track: Track) async -> Bool? {
+        for _ in 0..<3 {
+            try? await Task.sleep(for: .milliseconds(300))
+            do {
+                guard let current: Playback = try await request("/me/player"), let currentTrack = current.item else { continue }
+                player.apply(current)
+                if currentTrack.stableID == track.stableID || (track.uri != nil && currentTrack.uri == track.uri) { return true }
+            } catch {
+                report(error)
+                return nil
+            }
+        }
+        return false
+    }
+    private func setShuffleState(_ enabled: Bool) async -> Bool {
+        let mutation = optimistic(.shuffle) { $0.shuffle_state = enabled }
+        let success = await send("/me/player/shuffle", method: "PUT", query: [.init(name: "state", value: String(enabled))], refreshAfter: false)
+        complete(mutation, success: success)
+        return success
+    }
+    @discardableResult func play(_ track: Track, contextURI: String? = nil, following: [Track]? = nil, contextPosition: Int? = nil) async -> Bool {
+        guard let uri = track.uri else { return false }
         let original = player.playback
         let mutation = optimistic(.playback) { $0.item = track; $0.progress_ms = 0; $0.is_playing = true }
         let state = Playback(is_playing: true, progress_ms: 0, repeat_state: original?.repeat_state ?? "off", shuffle_state: original?.shuffle_state ?? false, item: track, device: original?.device)
@@ -661,7 +714,9 @@ import Security
         let body = try? JSONSerialization.data(withJSONObject: object)
         let target = Mutation(field: .playback, version: mutation.version, value: state)
         let fallback = "play track \"\(safeURI(uri))\"" + (context.map { " in context \"\(safeURI($0))\"" } ?? "")
-        complete(target, success: await send("/me/player/play", method: "PUT", body: body, localFallback: fallback))
+        let success = await send("/me/player/play", method: "PUT", body: body, localFallback: fallback)
+        complete(target, success: success)
+        return success
     }
     func playCollection() async { if let first = detailTracks.first { await play(first, contextURI: detailURI) } }
     func next() async { await send("/me/player/next", method: "POST", localFallback: "next track") }
@@ -679,9 +734,7 @@ import Security
         if !success, mutationVersions[.volume] == mutation.version, player.playback?.device?.volume_percent == nil { player.setVolume(prior) }
     }
     func shuffle() async {
-        let desired = player.playback?.shuffle_state != true
-        let mutation = optimistic(.shuffle) { $0.shuffle_state = desired }
-        complete(mutation, success: await send("/me/player/shuffle", method: "PUT", query: [.init(name: "state", value: String(desired))]))
+        _ = await setShuffleState(player.playback?.shuffle_state != true)
     }
     func repeatMode() async {
         let current = player.playback?.repeat_state ?? "off", next = current == "off" ? "context" : current == "context" ? "track" : "off"

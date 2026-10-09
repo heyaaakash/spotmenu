@@ -168,7 +168,9 @@ private struct BrowseArea: View {
         }
         if preferences.filter == .all || preferences.filter == .songs {
             SectionLabel(title: "Liked songs · \(spotify.saved.count) loaded", icon: "heart.fill").padding(.top, 5)
-            ForEach(Array(spotify.saved.enumerated()), id: \.element.stableID) { _, track in TrackRow(track: track).id("library:saved:\(track.stableID)") }
+            ForEach(spotify.saved, id: \.stableID) { track in
+                TrackRow(track: track, playAction: { await spotify.playLikedSong(track) }).id("library:saved:\(track.stableID)")
+            }
             if spotify.saved.isEmpty { EmptyCard(title: "A place for your favorites", text: "Tap the heart on a track to save it here.", icon: "heart") }
             if spotify.savedNext != nil { LoadMoreButton(title: "Load more liked songs", loading: spotify.loadingSaved) { Task { await spotify.loadMoreSaved() } }.id("library:moreSaved") }
         }

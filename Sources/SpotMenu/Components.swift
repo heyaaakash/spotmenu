@@ -86,6 +86,7 @@ struct TrackRow: View {
     let track: Track
     var selected = false
     var onPlay: (() -> Void)? = nil
+    var playAction: (() async -> Void)? = nil
     var contextURI: String? = nil
     var following: [Track]? = nil
     var contextPosition: Int? = nil
@@ -120,7 +121,10 @@ struct TrackRow: View {
     }
     private func play() {
         onPlay?()
-        Task { await spotify.play(track, contextURI: contextURI, following: following, contextPosition: contextPosition) }
+        Task {
+            if let playAction { await playAction() }
+            else { await spotify.play(track, contextURI: contextURI, following: following, contextPosition: contextPosition) }
+        }
     }
 }
 
