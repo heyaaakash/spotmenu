@@ -2,7 +2,12 @@
 
 ## 1.4.4 replacement release — build 10
 
-Prepared on **2026-10-09**, Asia/Kolkata, on Apple Silicon. Both architecture packages will be rebuilt from the release commit; app metadata, signatures, archive contents, extracted executables, and checksums will be verified. This authorized replacement updates the existing v1.4.4 tag and GitHub release assets.
+Published on **2026-10-09**, Asia/Kolkata, as the [latest GitHub release](https://github.com/heyaaakash/spotmenu/releases/tag/v1.4.4). Annotated tag `v1.4.4` points to clean release commit `29aded577679e74d0aab62b647d97e9e71e26762`. GitHub Actions was not used.
+
+- Both arm64 and x86_64 packages built from the clean release commit. Bundle version/build, architecture, plist, ad-hoc signature, archive contents, extracted executable equality, and checksums passed. Intel is cross-compiled; physical Intel runtime is unverified.
+- All five published assets (both ZIPs, `SHA256SUMS.txt`, `BUILD_INFO.txt`, and `RELEASE_NOTES.md`) were downloaded from GitHub and matched byte-for-byte with the local release snapshot. The downloaded ZIPs passed the published SHA-256 manifest.
+- ZIP SHA-256: arm64 `5e0b1d76d840da5b3bb51cc4b103e694a92b24622ef22b63e5701d0d67f0b301`; x86_64 `e4505800786e92987862304153a92e005e3196c84b304790f0dc06891f27aa87`.
+- The regression harness and live Spotify playback were not run for build 10. Prior v1.4.3 harness evidence is retained below.
 
 The Liked Songs change holds Shuffle off until Spotify confirms the selected track, restores the previous Shuffle setting, and retries the selected URI alone if the URI list starts a different song. The regression harness and live Spotify playback were not verified for build 10.
 
