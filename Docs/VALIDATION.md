@@ -2,7 +2,7 @@
 
 ## 1.4.4 replacement release — build 10
 
-Published on **2026-10-09**, Asia/Kolkata, as the [latest GitHub release](https://github.com/heyaaakash/spotmenu/releases/tag/v1.4.4). Annotated tag `v1.4.4` points to clean release commit `29aded577679e74d0aab62b647d97e9e71e26762`. GitHub Actions was not used.
+Published on **2026-10-09**, Asia/Kolkata, as the [latest GitHub release](https://github.com/heyaaakash/playmenu/releases/tag/v1.4.4). Annotated tag `v1.4.4` points to clean release commit `29aded577679e74d0aab62b647d97e9e71e26762`. GitHub Actions was not used.
 
 - Both arm64 and x86_64 packages built from the clean release commit. Bundle version/build, architecture, plist, ad-hoc signature, archive contents, extracted executable equality, and checksums passed. Intel is cross-compiled; physical Intel runtime is unverified.
 - All five published assets (both ZIPs, `SHA256SUMS.txt`, `BUILD_INFO.txt`, and `RELEASE_NOTES.md`) were downloaded from GitHub and matched byte-for-byte with the local release snapshot. The downloaded ZIPs passed the published SHA-256 manifest.
@@ -26,7 +26,7 @@ Published on **2026-10-08**, Asia/Kolkata, as the first published v1.4.4 release
 
 ## Published v1.4.3 — build 8
 
-Published on **2026-10-01**, Asia/Calcutta, as a published GitHub release (the latest is [v1.4.4](https://github.com/heyaaakash/spotmenu/releases/tag/v1.4.4)). The final repository check reports public visibility (the pre-release check reported private). Annotated tag `v1.4.3` points to clean release commit `f6663fe1739062588a73ddd1ab0cdeedee6c03c5`; the tag was pushed before uploading assets.
+Published on **2026-10-01**, Asia/Calcutta, as a published GitHub release (the latest is [v1.4.4](https://github.com/heyaaakash/playmenu/releases/tag/v1.4.4)). The final repository check reports public visibility (the pre-release check reported private). Annotated tag `v1.4.3` points to clean release commit `f6663fe1739062588a73ddd1ab0cdeedee6c03c5`; the tag was pushed before uploading assets.
 
 - The tagged source was rebuilt locally with `./Scripts/prepare-release.sh`: **46 passed, 0 failures, 0 skipped**. Screenshots stayed unchanged, and provenance records `source_state=clean`, version 1.4.3, build 8, and the exact tagged commit.
 - Five assets were uploaded: arm64/x86_64 ZIPs, `SHA256SUMS.txt`, `BUILD_INFO.txt`, and `RELEASE_NOTES.md`. All were downloaded from the draft and compared byte-for-byte with local release assets before publication. Checksums, extracted signatures/plists, version/build, architecture, and bundled license passed for both downloaded ZIPs.
@@ -139,14 +139,14 @@ The local package is a working-source review artifact in `dist/`; it is not atta
 
 ### Historical CI — retired
 
-The [Verify workflow](https://github.com/heyaaakash/spotify-mac-menu/actions/runs/36713797814) **passed both jobs** on macOS 15.7.9, Swift 6.1.2, from source commit `cbc9350fd15e98b278020b87a9df26002c248912`.
+The [Verify workflow](https://github.com/heyaaakash/playmenu/actions/runs/36713797814) **passed both jobs** on macOS 15.7.9, Swift 6.1.2, from source commit `cbc9350fd15e98b278020b87a9df26002c248912`.
 
 | Runner | Result |
 | --- | --- |
 | Apple Silicon (`macos-15`) | 30 checks passed, 0 failures, 0 skipped; app/ZIP packaging and upload passed |
 | Intel (`macos-15-intel`) | 29 checks passed, 0 failures, 1 explicitly skipped native-render fixture; app/ZIP packaging and upload passed |
 
-The [initial run](https://github.com/heyaaakash/spotify-mac-menu/actions/runs/36713483979) exposed a Metal assertion in the Intel VM during native snapshot rendering. That run reported one skipped check for the Intel hosted runner; the check executes in current local verification. This does not establish native rendering on physical Intel hardware. CI never uses a Spotify account or exercises live playback/permissions.
+The [initial run](https://github.com/heyaaakash/playmenu/actions/runs/36713483979) exposed a Metal assertion in the Intel VM during native snapshot rendering. That run reported one skipped check for the Intel hosted runner; the check executes in current local verification. This does not establish native rendering on physical Intel hardware. CI never uses a Spotify account or exercises live playback/permissions.
 
 Both uploaded CI ZIPs were downloaded on 2026-09-30 and checked independently: SHA-256 matched, signatures and plists verified, bundle version was 1.3.0, architecture matched the filename, and the bundled license matched the repository license. They are local review artifacts in `dist/`, not a public release. GitHub CI artifacts have a 14-day retention policy.
 

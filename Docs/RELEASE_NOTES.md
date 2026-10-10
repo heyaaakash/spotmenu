@@ -4,10 +4,10 @@ PlayMenu is the new name for the macOS Spotify menu-bar app previously released 
 
 ## Downloads
 
-- [Apple Silicon ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-arm64.zip)
-- [Intel ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-x86_64.zip)
-- [SHA-256 checksums](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/SHA256SUMS.txt)
-- [Build provenance](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/BUILD_INFO.txt)
+- [Apple Silicon ZIP](https://github.com/heyaaakash/playmenu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-arm64.zip)
+- [Intel ZIP](https://github.com/heyaaakash/playmenu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-x86_64.zip)
+- [SHA-256 checksums](https://github.com/heyaaakash/playmenu/releases/download/v1.4.4/SHA256SUMS.txt)
+- [Build provenance](https://github.com/heyaaakash/playmenu/releases/download/v1.4.4/BUILD_INFO.txt)
 
 Quit the old SpotMenu copy before moving `PlayMenu.app` to Applications. The bundle identity is deliberately retained to preserve existing macOS permissions and preferences.
 

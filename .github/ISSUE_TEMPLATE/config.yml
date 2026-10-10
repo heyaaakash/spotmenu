@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Setup and troubleshooting
-    url: https://github.com/heyaaakash/spotify-mac-menu/blob/main/Docs/SETUP.md
+    url: https://github.com/heyaaakash/playmenu/blob/main/Docs/SETUP.md
     about: Check sign-in, playback, device, and account prerequisites.
   - name: Security reporting
-    url: https://github.com/heyaaakash/spotify-mac-menu/blob/main/SECURITY.md
+    url: https://github.com/heyaaakash/playmenu/blob/main/SECURITY.md
     about: Read this before sharing vulnerability details or sensitive data.

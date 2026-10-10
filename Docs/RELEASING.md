@@ -25,7 +25,7 @@ The upload script needs authenticated GitHub CLI and `rg`. It checks the clean t
 
 The upload script reads only `dist/<version>/release/`; app bundles, working packages, and media are not uploaded. Version folders contain only app builds, packages, and release snapshots; promotional media lives separately in `dist/media/<project>/`, and other non-release deliverables in `dist/other/<task>/`. This flat directory is a verified release snapshot with checksum paths relative to that directory. Release filenames and GitHub URLs are unchanged by the local folder layout. See [generated output layout](DEVELOPMENT.md#generated-output-layout).
 
-Download every draft asset, check the hashes, and install/open the actual downloads on the target Macs. Update release claims from those results. Final publication remains an explicit owner action in GitHub Releases; verify the published page and support links afterward. Binary releases are available on the [Releases page](https://github.com/heyaaakash/spotify-mac-menu/releases).
+Download every draft asset, check the hashes, and install/open the actual downloads on the target Macs. Update release claims from those results. Final publication remains an explicit owner action in GitHub Releases; verify the published page and support links afterward. Binary releases are available on the [Releases page](https://github.com/heyaaakash/playmenu/releases).
 
 ## Credentials and signing
 

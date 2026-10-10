@@ -58,11 +58,11 @@ All previews use fictional sample data. See [screenshots/README.md](screenshots/
 
 ## Get PlayMenu
 
-Download **[PlayMenu v1.4.4](https://github.com/heyaaakash/spotify-mac-menu/releases/tag/v1.4.4)** (build 13, replacing build 10):
+Download **[PlayMenu v1.4.4](https://github.com/heyaaakash/playmenu/releases/tag/v1.4.4)** (build 13, replacing build 10):
 
 | Apple Silicon | Intel | Verification |
 | --- | --- | --- |
-| [arm64 ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-arm64.zip) | [x86_64 ZIP](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-x86_64.zip) | [SHA-256 checksums](https://github.com/heyaaakash/spotify-mac-menu/releases/download/v1.4.4/SHA256SUMS.txt) |
+| [arm64 ZIP](https://github.com/heyaaakash/playmenu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-arm64.zip) | [x86_64 ZIP](https://github.com/heyaaakash/playmenu/releases/download/v1.4.4/PlayMenu-1.4.4-macos-x86_64.zip) | [SHA-256 checksums](https://github.com/heyaaakash/playmenu/releases/download/v1.4.4/SHA256SUMS.txt) |
 
 Unzip the package and move `PlayMenu.app` to Applications. Quit the previous SpotMenu copy before installing; the retained app identity preserves your existing sign-in and settings. Intel is cross-compiled; physical Intel use and clean installation remain unverified.
 
@@ -101,7 +101,7 @@ Follow the [setup and troubleshooting guide](Docs/SETUP.md) for account prerequi
 ## Build from source
 
 ```sh
-git clone https://github.com/heyaaakash/spotify-mac-menu.git
+git clone https://github.com/heyaaakash/playmenu.git
 cd spotify-mac-menu
 ./Scripts/test.sh
 ./Scripts/build-app.sh
@@ -114,7 +114,7 @@ Quit an older running copy before opening a rebuilt app. To install the local bu
 
 PlayMenu talks directly to Spotify for authorization, library data, and playback commands. It stores the refresh token in macOS Keychain and keeps preferences, search history, library metadata, and artwork caches locally. Disconnecting removes the token and library snapshot; preferences and artwork remain. There is no application-owned analytics or telemetry service in the current source. See [privacy and removal](Docs/PRIVACY.md).
 
-Report bugs through [Issues](https://github.com/heyaaakash/spotify-mac-menu/issues/new/choose), with the app version, macOS version, Mac architecture, and redacted reproduction steps. Check [SECURITY.md](SECURITY.md) before reporting a vulnerability. Contributions are described in [CONTRIBUTING.md](CONTRIBUTING.md).
+Report bugs through [Issues](https://github.com/heyaaakash/playmenu/issues/new/choose), with the app version, macOS version, Mac architecture, and redacted reproduction steps. Check [SECURITY.md](SECURITY.md) before reporting a vulnerability. Contributions are described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 The source is [MIT licensed](LICENSE). See [asset and dependency notes](Docs/ATTRIBUTIONS.md). Spotify names and marks belong to their respective owners.
 

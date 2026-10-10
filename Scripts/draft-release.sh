@@ -7,7 +7,7 @@ command -v gh >/dev/null || { echo "Install and authenticate GitHub CLI first." 
 [[ -z "$(git status --porcelain)" ]] || { echo "Commit changes, then run prepare-release.sh from the clean tree." >&2; exit 1; }
 tag="v${version}"
 commit="$(git rev-parse HEAD)"
-repo=heyaaakash/spotify-mac-menu
+repo=heyaaakash/playmenu
 [[ "$(git rev-parse "refs/tags/${tag}^{commit}")" == "$commit" ]] || { echo "The existing $tag must point to HEAD." >&2; exit 1; }
 [[ "$(gh api "repos/${repo}/commits/${tag}" --jq .sha)" == "$commit" ]] || { echo "Push the existing tag before drafting." >&2; exit 1; }
 [[ -f "$release_dir/BUILD_INFO.txt" ]] || { echo "Run ./Scripts/prepare-release.sh first." >&2; exit 1; }
