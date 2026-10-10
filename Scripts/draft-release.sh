@@ -18,11 +18,11 @@ done
 cmp Docs/RELEASE_NOTES.md "$release_dir/RELEASE_NOTES.md"
 (cd "$release_dir"; shasum -a 256 -c SHA256SUMS.txt)
 for architecture in arm64 x86_64; do
-  [[ -f "$release_dir/SpotMenu-${version}-macos-${architecture}.zip" ]]
+  [[ -f "$release_dir/PlayMenu-${version}-macos-${architecture}.zip" ]]
 done
 gh release create "$tag" \
-  "$release_dir/SpotMenu-${version}-macos-arm64.zip" \
-  "$release_dir/SpotMenu-${version}-macos-x86_64.zip" \
+  "$release_dir/PlayMenu-${version}-macos-arm64.zip" \
+  "$release_dir/PlayMenu-${version}-macos-x86_64.zip" \
   "$release_dir/SHA256SUMS.txt" "$release_dir/BUILD_INFO.txt" "$release_dir/RELEASE_NOTES.md" \
-  --repo "$repo" --draft --verify-tag --title "SpotMenu $tag" \
+  --repo "$repo" --draft --verify-tag --title "PlayMenu $tag" \
   --notes-file "$release_dir/RELEASE_NOTES.md"

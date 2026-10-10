@@ -5,8 +5,8 @@ if [[ -z "${SDKROOT:-}" && -d /Library/Developer/CommandLineTools/SDKs/MacOSX26.
   export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
 fi
 export SDKROOT="${SDKROOT:-$(xcrun --show-sdk-path)}"
-export CLANG_MODULE_CACHE_PATH="${TMPDIR:-/private/tmp}/spotmenu-clang-cache"
+export CLANG_MODULE_CACHE_PATH="${TMPDIR:-/private/tmp}/playmenu-clang-cache"
 mkdir -p .build screenshots
-swiftc -swift-version 6 -parse-as-library -D SPOTMENU_CHECKS -sdk "$SDKROOT" -module-cache-path "$CLANG_MODULE_CACHE_PATH" Sources/SpotMenu/*.swift Tests/SpotMenuTests/ScreenshotRenderer.swift -o .build/SpotMenuScreenshots
-.build/SpotMenuScreenshots "${PWD}/screenshots"
+swiftc -swift-version 6 -parse-as-library -D PLAYMENU_CHECKS -sdk "$SDKROOT" -module-cache-path "$CLANG_MODULE_CACHE_PATH" Sources/PlayMenu/*.swift Tests/PlayMenuTests/ScreenshotRenderer.swift -o .build/PlayMenuScreenshots
+.build/PlayMenuScreenshots "${PWD}/screenshots"
 echo "Screenshots contain fictional sample data and locally drawn artwork."

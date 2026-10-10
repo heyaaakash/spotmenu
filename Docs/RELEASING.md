@@ -1,11 +1,11 @@
-# Releasing SpotMenu
+# Releasing PlayMenu
 
 All verification, screenshots, packaging, and release preparation run on a Mac. GitHub Actions is disabled and workflow files have been removed. Packages are ad-hoc signed and not notarized; automatic updates and Developer ID distribution are not configured.
 
 ## Prepare locally
 
 1. Update `VERSION`, `BUILD_NUMBER`, `CHANGELOG.md`, and `Docs/RELEASE_NOTES.md`. Current source: 1.4.4, build 10.
-2. Run `./Scripts/prepare-release.sh`. It runs every native regression check, refreshes fictional-data screenshots, builds arm64 and x86_64 ZIPs sequentially, round-trip verifies each app, and stages both ZIPs, `SHA256SUMS.txt`, release notes, and `BUILD_INFO.txt` in `dist/<version>/release/`. App bundles are retained separately in `dist/<version>/apps/arm64/SpotMenu.app` and `dist/<version>/apps/x86_64/SpotMenu.app`; the working ZIPs and individual checksum files are in `dist/<version>/packages/`.
+2. Run `./Scripts/prepare-release.sh`. It runs every native regression check, refreshes fictional-data screenshots, builds arm64 and x86_64 ZIPs sequentially, round-trip verifies each app, and stages both ZIPs, `SHA256SUMS.txt`, release notes, and `BUILD_INFO.txt` in `dist/<version>/release/`. App bundles are retained separately in `dist/<version>/apps/arm64/PlayMenu.app` and `dist/<version>/apps/x86_64/PlayMenu.app`; the working ZIPs and individual checksum files are in `dist/<version>/packages/`.
 3. Review screenshots and update [VALIDATION.md](VALIDATION.md) and [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md). Cross-compilation verifies the Intel package, not Intel runtime behavior. Perform live sign-in/playback, permission handling, clean installation, upgrade/uninstall, and physical-device testing for the environments you will claim.
 4. Commit the final source, screenshots, and evidence; push it. Generated `dist/` files stay outside Git. Rerun release preparation from that clean commit so its provenance says `source_state=clean` and identifies the exact commit.
 
@@ -16,7 +16,7 @@ For ordinary changes, use `./Scripts/verify.sh` before pushing; add `--screensho
 After reviewing the exact commit, create and push an immutable version tag matching `VERSION`, for example:
 
 ```sh
-git tag -a "v$(cat VERSION)" -m "SpotMenu $(cat VERSION)"
+git tag -a "v$(cat VERSION)" -m "PlayMenu $(cat VERSION)"
 git push origin "v$(cat VERSION)"
 ./Scripts/draft-release.sh
 ```

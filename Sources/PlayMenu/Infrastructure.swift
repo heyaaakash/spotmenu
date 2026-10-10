@@ -123,7 +123,7 @@ actor LocalSpotify {
 }
 
 enum Performance {
-    static let logger = Logger(subsystem: "com.spotmenu.app", category: "Responsiveness")
+    static let logger = Logger(subsystem: "com.playmenu.app", category: "Responsiveness")
     static func record(_ name: String, since start: ContinuousClock.Instant) {
         let elapsed = start.duration(to: .now)
         logger.debug("\(name, privacy: .public): \(String(describing: elapsed), privacy: .public)")

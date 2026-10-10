@@ -6,7 +6,13 @@ Version metadata comes from `VERSION` and `BUILD_NUMBER`. Future immutable relea
 
 - (none)
 
-## 1.4.4 — 2026-10-09, build 10 (replaces build 9)
+## 1.4.4 — 2026-10-10, build 13 (replaces build 10)
+
+- Renamed the app to PlayMenu and regenerated the app bundle, icon resources, packages, and screenshots while preserving the 1.4.4 version. Existing Spotify sign-in, preferences, and local library data remain compatible.
+- Added a menu-bar secondary-click menu for quick playback, appearance, settings, and quit actions.
+- Hardened Liked Songs starts and previous/next/play controls against relinked tracks, shuffle failures, stale playback reads, and ambiguous API responses.
+
+## 1.4.4 — 2026-10-09, build 10 (superseded by build 13)
 
 - Spotify sign-in selects an available local callback port, preventing another app using port 8888 from blocking connection or reconnection.
 - Spotify authorization opens only after the new callback listener reaches its ready state; stale sign-in attempts cannot launch a browser.

@@ -43,7 +43,7 @@ struct SettingsView: View {
                         setting("Continuous playback", detail: "Continue through loaded Liked Songs and queue tracks, or through the selected song’s album.", value: $preferences.continuousPlayback)
                         VStack(alignment: .leading, spacing: 7) {
                             Label("Similar songs after the collection", systemImage: "sparkles").font(.system(size: 11, weight: .semibold))
-                            caption("In Spotify Settings, enable Autoplay on the device playing your music. Spotify chooses the recommendations; SpotMenu cannot change this setting for you.")
+                            caption("In Spotify Settings, enable Autoplay on the device playing your music. Spotify chooses the recommendations; PlayMenu cannot change this setting for you.")
                             Link("How to enable Spotify Autoplay ↗", destination: URL(string: "https://support.spotify.com/us/article/autoplay/")!)
                                 .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.green)
                         }.padding(11).frame(maxWidth: .infinity, alignment: .leading).background(Palette.raised, in: RoundedRectangle(cornerRadius: 10))
@@ -58,7 +58,7 @@ struct SettingsView: View {
                     }
 
                     group("Keyboard shortcuts", icon: "keyboard") {
-                        shortcut("Open / close SpotMenu", "⌘⇧Space")
+                        shortcut("Open / close PlayMenu", "⌘⇧Space")
                         shortcut("Search", "⌘K")
                         shortcut("Settings", "⌘,")
                         shortcut("Play / pause", "Space")
@@ -74,9 +74,9 @@ struct SettingsView: View {
                             Button("Disconnect Spotify") { preferences.showingSettings = false; spotify.disconnect() }
                                 .foregroundStyle(.red)
                         }
-                        Button("Quit SpotMenu") { NSApp.terminate(nil) }.foregroundStyle(Palette.muted)
+                        Button("Quit PlayMenu") { NSApp.terminate(nil) }.foregroundStyle(Palette.muted)
                     }.buttonStyle(.plain).font(.system(size: 12))
-                    Text("SpotMenu \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development")").font(.system(size: 10)).foregroundStyle(Palette.muted).frame(maxWidth: .infinity).padding(.top, 4)
+                    Text("PlayMenu \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development")").font(.system(size: 10)).foregroundStyle(Palette.muted).frame(maxWidth: .infinity).padding(.top, 4)
                 }.padding(.trailing, 3).padding(.bottom, 10)
             }.tint(Palette.green)
         }

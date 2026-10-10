@@ -61,11 +61,11 @@ private actor MockAudioCapture: AudioCapturing {
     func counts() -> (Int, Int) { (starts, stops) }
 }
 
-@MainActor final class SpotMenuTests {
+@MainActor final class PlayMenuTests {
     private func fixture(capture: MockAudioCapture? = nil) -> (SpotifyService, UserDefaults, URL) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubProtocol.self]
-        let name = "SpotMenuTests.\(UUID())"
+        let name = "PlayMenuTests.\(UUID())"
         let defaults = UserDefaults(suiteName: name)!
         defaults.set("fixture-client", forKey: "spotifyClientID")
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(name)
@@ -303,6 +303,57 @@ private actor MockAudioCapture: AudioCapturing {
         let history = await StubNetwork.shared.history()
         expect(history.map { $0.url!.path } == ["/v1/me/player/shuffle", "/v1/me/player/shuffle", "/v1/me/player/repeat"])
         expect(history.compactMap { query($0, "state") } == ["true", "false", "context"])
+    }
+
+    func testAllPlayerControlsUseTheirExpectedSpotifyCommands() async throws {
+        await StubNetwork.shared.reset { _ in .init(status: 204) }
+        let (service, _, _) = fixture(); service.player.apply(playback(song))
+        await service.next()
+        await service.previous()
+        await service.togglePlayback()
+        await service.togglePlayback()
+        await service.shuffle()
+        await service.shuffle()
+        await service.repeatMode()
+        await service.repeatMode()
+        await service.repeatMode()
+        let history = await StubNetwork.shared.history()
+        expect(history.map { "\($0.httpMethod ?? "") \($0.url!.path)" } == [
+            "POST /v1/me/player/next", "POST /v1/me/player/previous",
+            "PUT /v1/me/player/pause", "PUT /v1/me/player/play",
+            "PUT /v1/me/player/shuffle", "PUT /v1/me/player/shuffle",
+            "PUT /v1/me/player/repeat", "PUT /v1/me/player/repeat", "PUT /v1/me/player/repeat"
+        ])
+        expect(history.compactMap { query($0, "state") } == ["true", "false", "context", "track", "off"])
+        expect(service.player.playback?.is_playing == true)
+        expect(service.player.playback?.shuffle_state == false)
+        expect(service.player.playback?.repeat_state == "off")
+    }
+
+    func testAmbiguousPlayerFailuresNeverRepeatNonIdempotentCommandsLocally() {
+        expect(allowsDesktopFallback(after: APIError.noDevice))
+        expect(allowsDesktopFallback(after: APIError.forbidden))
+        expect(!allowsDesktopFallback(after: APIError.offline))
+        expect(!allowsDesktopFallback(after: APIError.ambiguousResponse))
+        expect(!allowsDesktopFallback(after: APIError.rateLimited(5)))
+        expect(!allowsDesktopFallback(after: URLError(.timedOut)))
+        expect(!allowsDesktopFallback(after: URLError(.networkConnectionLost)))
+    }
+
+    func testNextInvalidatesInFlightStalePausedPlayback() async throws {
+        var delayedPaused = pausedResponse
+        delayedPaused.delay = .milliseconds(120)
+        let stalePaused = delayedPaused
+        await StubNetwork.shared.reset { request in
+            request.url?.path == "/v1/me/player" ? stalePaused : .init(status: 204)
+        }
+        let (service, _, _) = fixture(); service.player.apply(playback(song))
+        let refresh = Task { await service.refreshPlayback() }
+        try await waitForPlaybackRequests(1)
+        await service.next()
+        await refresh.value
+        expect(service.player.playback?.is_playing == true)
+        expect(service.player.playback?.item == song)
     }
 
     func testFailuresRollbackOnlyTheAffectedControl() async throws {
@@ -599,6 +650,54 @@ private actor MockAudioCapture: AudioCapturing {
         expect(single["context_uri"] == nil)
     }
 
+    func testLikedSongPlaybackUsesMarketRelinkedTrackURI() async throws {
+        let playing = #"{"is_playing":true,"item":{"id":"playable","name":"First song","uri":"spotify:track:playable"}}"#
+        await StubNetwork.shared.reset { request in
+            if request.url?.path == "/v1/tracks/one" { return .init(json: #"{"uri":"spotify:track:playable","is_playable":true}"#) }
+            if request.url?.path == "/v1/me/player" { return .init(json: playing) }
+            return .init(status: 204)
+        }
+        let (service, _, _) = fixture(); service.saved = [song]
+        await service.playLikedSong(song)
+        let history = await StubNetwork.shared.history()
+        let metadata = history.first { $0.url?.path == "/v1/tracks/one" }
+        let play = history.first { $0.url?.path == "/v1/me/player/play" }
+        let market = query(try require(metadata), "market")
+        let uris = try requestObject(require(play))["uris"] as? [String]
+        expect(market == "from_token")
+        expect(uris == ["spotify:track:playable"])
+        expect(service.notice == nil)
+    }
+
+    func testLikedSongPlaybackDoesNotStartAnUnavailableTrack() async throws {
+        await StubNetwork.shared.reset { request in
+            if request.url?.path == "/v1/tracks/one" { return .init(json: #"{"uri":"spotify:track:one","is_playable":false}"#) }
+            return .init(status: 204)
+        }
+        let (service, _, _) = fixture(); service.saved = [song]
+        await service.playLikedSong(song)
+        let history = await StubNetwork.shared.history()
+        expect(!history.contains { $0.url?.path == "/v1/me/player/play" })
+        expect(service.notice?.message.contains("isn’t available") == true)
+    }
+
+    func testLikedSongVerifiesSingleTrackWhenShuffleCannotBeDisabled() async throws {
+        let other = #"{"is_playing":true,"item":{"id":"other","name":"Other song","uri":"spotify:track:other"}}"#
+        await StubNetwork.shared.reset { request in
+            if request.url?.path == "/v1/me/player/shuffle" { return .init(status: 403) }
+            if request.url?.path == "/v1/me/player" { return .init(json: other) }
+            return .init(status: 204)
+        }
+        let (service, _, _) = fixture(); service.saved = [song]
+        service.player.apply(Playback(is_playing: true, progress_ms: 0, repeat_state: "off", shuffle_state: true, item: song, device: nil))
+        await service.playLikedSong(song)
+        let history = await StubNetwork.shared.history()
+        let play = history.first { $0.url?.path == "/v1/me/player/play" }
+        let uris = try requestObject(require(play))["uris"] as? [String]
+        expect(uris == ["spotify:track:one"])
+        expect(service.notice?.message.contains("couldn’t start") == true)
+    }
+
     func testQueueAndPlaylistSelectionKeepTheirOrder() async throws {
         await StubNetwork.shared.reset { _ in .init(status: 204) }
         let (service, _, _) = fixture()
@@ -709,7 +808,7 @@ private actor MockAudioCapture: AudioCapturing {
             let bitmap = try require(host.view.bitmapImageRepForCachingDisplay(in: host.view.bounds))
             host.view.cacheDisplay(in: host.view.bounds, to: bitmap)
             let png = try require(bitmap.representation(using: .png, properties: [:]))
-            try png.write(to: FileManager.default.temporaryDirectory.appendingPathComponent("spotmenu-\(scheme == .dark ? "dark" : "light")-\(screen).png"))
+            try png.write(to: FileManager.default.temporaryDirectory.appendingPathComponent("playmenu-\(scheme == .dark ? "dark" : "light")-\(screen).png"))
             window.close()
             service.visualizer.shutdown(); await service.visualizer.settle()
         }
@@ -880,9 +979,9 @@ private actor MockAudioCapture: AudioCapturing {
 private struct MissingValue: Error {}
 private func require<T>(_ value: T?) throws -> T { guard let value else { throw MissingValue() }; return value }
 
-@main struct SpotMenuChecks {
+@main struct PlayMenuChecks {
     @MainActor static func main() async {
-        let checks = SpotMenuTests()
+        let checks = PlayMenuTests()
         var passed = 0
         do {
             let before = failures.count
@@ -971,6 +1070,21 @@ private func require<T>(_ value: T?) throws -> T { guard let value else { throw 
         } catch { failures.append("testSearchPlaybackRetainsAlbumAndSelectedSong: \(error)") }
         do {
             let before = failures.count
+            try await checks.testLikedSongPlaybackUsesMarketRelinkedTrackURI()
+            if failures.count == before { passed += 1; print("PASS testLikedSongPlaybackUsesMarketRelinkedTrackURI") }
+        } catch { failures.append("testLikedSongPlaybackUsesMarketRelinkedTrackURI: \(error)") }
+        do {
+            let before = failures.count
+            try await checks.testLikedSongPlaybackDoesNotStartAnUnavailableTrack()
+            if failures.count == before { passed += 1; print("PASS testLikedSongPlaybackDoesNotStartAnUnavailableTrack") }
+        } catch { failures.append("testLikedSongPlaybackDoesNotStartAnUnavailableTrack: \(error)") }
+        do {
+            let before = failures.count
+            try await checks.testLikedSongVerifiesSingleTrackWhenShuffleCannotBeDisabled()
+            if failures.count == before { passed += 1; print("PASS testLikedSongVerifiesSingleTrackWhenShuffleCannotBeDisabled") }
+        } catch { failures.append("testLikedSongVerifiesSingleTrackWhenShuffleCannotBeDisabled: \(error)") }
+        do {
+            let before = failures.count
             try await checks.testQueueAndPlaylistSelectionKeepTheirOrder()
             if failures.count == before { passed += 1; print("PASS testQueueAndPlaylistSelectionKeepTheirOrder") }
         } catch { failures.append("testQueueAndPlaylistSelectionKeepTheirOrder: \(error)") }
@@ -1000,6 +1114,21 @@ private func require<T>(_ value: T?) throws -> T { guard let value else { throw 
             try await checks.testRapidCommandsReachSpotifyInOrder()
             if failures.count == before { passed += 1; print("PASS testRapidCommandsReachSpotifyInOrder") }
         } catch { failures.append("testRapidCommandsReachSpotifyInOrder: \(error)") }
+        do {
+            let before = failures.count
+            try await checks.testAllPlayerControlsUseTheirExpectedSpotifyCommands()
+            if failures.count == before { passed += 1; print("PASS testAllPlayerControlsUseTheirExpectedSpotifyCommands") }
+        } catch { failures.append("testAllPlayerControlsUseTheirExpectedSpotifyCommands: \(error)") }
+        do {
+            let before = failures.count
+            checks.testAmbiguousPlayerFailuresNeverRepeatNonIdempotentCommandsLocally()
+            if failures.count == before { passed += 1; print("PASS testAmbiguousPlayerFailuresNeverRepeatNonIdempotentCommandsLocally") }
+        }
+        do {
+            let before = failures.count
+            try await checks.testNextInvalidatesInFlightStalePausedPlayback()
+            if failures.count == before { passed += 1; print("PASS testNextInvalidatesInFlightStalePausedPlayback") }
+        } catch { failures.append("testNextInvalidatesInFlightStalePausedPlayback: \(error)") }
         do {
             let before = failures.count
             try await checks.testFailuresRollbackOnlyTheAffectedControl()
@@ -1090,9 +1219,9 @@ private func require<T>(_ value: T?) throws -> T { guard let value else { throw 
             try await checks.testCollectionPlaybackUsesItsContext()
             if failures.count == before { passed += 1; print("PASS testCollectionPlaybackUsesItsContext") }
         } catch { failures.append("testCollectionPlaybackUsesItsContext: \(error)") }
-        let skipUIRender = ProcessInfo.processInfo.environment["SPOTMENU_SKIP_UI_RENDER"] == "1"
+        let skipUIRender = (ProcessInfo.processInfo.environment["PLAYMENU_SKIP_UI_RENDER"] ?? ProcessInfo.processInfo.environment["SPOTMENU_SKIP_UI_RENDER"]) == "1"
         if skipUIRender {
-            print("SKIP testNativeViewsKeepCompactAndExpandedDimensions: native GPU rendering explicitly disabled by SPOTMENU_SKIP_UI_RENDER; run on a Mac with working graphics")
+            print("SKIP testNativeViewsKeepCompactAndExpandedDimensions: native GPU rendering explicitly disabled by PLAYMENU_SKIP_UI_RENDER; run on a Mac with working graphics")
         } else {
             do {
                 let before = failures.count

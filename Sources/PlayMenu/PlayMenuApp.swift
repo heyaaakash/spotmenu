@@ -3,12 +3,12 @@ import Carbon
 import Combine
 import SwiftUI
 
-#if !SPOTMENU_CHECKS
-@main enum SpotMenuApp {
+#if !PLAYMENU_CHECKS
+@main enum PlayMenuApp {
     @MainActor static func main() {
         let application = NSApplication.shared
         application.setActivationPolicy(.accessory)
-        let delegate = SpotMenuDelegate()
+        let delegate = PlayMenuDelegate()
         application.delegate = delegate
         // Menu bar only: no window scene for macOS to open or restore at launch.
         withExtendedLifetime(delegate) { application.run() }
@@ -23,7 +23,7 @@ enum PopoverLayout {
     static func size(_ mode: PopoverMode) -> NSSize { .init(width: width, height: mode == .compact ? compactHeight : expandedHeight) }
 }
 
-@MainActor final class SpotMenuDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
+@MainActor final class PlayMenuDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private let preferences: AppPreferences
     private let spotify: SpotifyService
     private lazy var statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -54,16 +54,21 @@ enum PopoverLayout {
         configure(compactPopover, mode: .compact)
         systemAppearance = SystemAppearance(popovers: [compactPopover, expandedPopover], preferences: preferences)
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "Open SpotMenu")
-            button.target = self; button.action = #selector(togglePopover)
-            button.toolTip = "SpotMenu · ⌘⇧Space"
+            button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "Open PlayMenu")
+            button.target = self; button.action = #selector(statusItemAction)
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            button.toolTip = "PlayMenu · ⌘⇧Space"
         }
         preferences.$compact.combineLatest(spotify.$connected)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _, _ in self?.switchMode() }
             .store(in: &subscriptions)
         spotify.player.$playback.map { $0?.is_playing == true }.removeDuplicates().combineLatest(preferences.$playingIcon)
-            .sink { [weak self] playing, enabled in self?.statusItem.button?.image = NSImage(systemSymbolName: playing && enabled ? "waveform" : "music.note", accessibilityDescription: "Open SpotMenu") }
+            .sink { [weak self] playing, enabled in self?.statusItem.button?.image = NSImage(systemSymbolName: playing && enabled ? "waveform" : "music.note", accessibilityDescription: "Open PlayMenu") }
+            .store(in: &subscriptions)
+        spotify.$selectingTrack.removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] selecting in self?.handleTrackSelection(selecting) }
             .store(in: &subscriptions)
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             let consumed = MainActor.assumeIsolated { self?.handleKey(event) == nil }
@@ -90,10 +95,94 @@ enum PopoverLayout {
         popover.contentViewController = controller
         popover.contentSize = size
     }
+    @objc private func statusItemAction() {
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            showQuickMenu()
+        } else {
+            togglePopover()
+        }
+    }
     @objc private func togglePopover() {
         presentation.dismiss(); pendingTransition = nil
         if let shown = visiblePopover { shown.close() }
         else { show(desiredMode) }
+    }
+    private func showQuickMenu() {
+        guard let button = statusItem.button else { return }
+        let menu = NSMenu()
+
+        let openItem = NSMenuItem(title: "Open PlayMenu", action: #selector(openPopoverFromMenu), keyEquivalent: "")
+        openItem.target = self
+        menu.addItem(openItem)
+        menu.addItem(.separator())
+
+        let compactItem = NSMenuItem(title: "Compact player", action: #selector(toggleCompactMode(_:)), keyEquivalent: "")
+        compactItem.target = self
+        compactItem.state = preferences.compact ? .on : .off
+        menu.addItem(compactItem)
+
+        let continuousItem = NSMenuItem(title: "Continuous playback", action: #selector(toggleContinuousPlayback(_:)), keyEquivalent: "")
+        continuousItem.target = self
+        continuousItem.state = preferences.continuousPlayback ? .on : .off
+        menu.addItem(continuousItem)
+
+        let animationsItem = NSMenuItem(title: "Animated interactions", action: #selector(toggleAnimations(_:)), keyEquivalent: "")
+        animationsItem.target = self
+        animationsItem.state = preferences.animations ? .on : .off
+        menu.addItem(animationsItem)
+
+        let appearanceItem = NSMenuItem(title: "Appearance", action: nil, keyEquivalent: "")
+        let appearanceMenu = NSMenu(title: "Appearance")
+        for mode in AppearanceMode.allCases {
+            let item = NSMenuItem(title: mode.rawValue, action: #selector(setAppearance(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = mode.rawValue
+            item.state = preferences.appearance == mode ? .on : .off
+            appearanceMenu.addItem(item)
+        }
+        appearanceItem.submenu = appearanceMenu
+        menu.addItem(appearanceItem)
+
+        menu.addItem(.separator())
+        let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",")
+        settingsItem.target = self
+        settingsItem.keyEquivalentModifierMask = .command
+        menu.addItem(settingsItem)
+        let quitItem = NSMenuItem(title: "Quit PlayMenu", action: #selector(quitFromMenu), keyEquivalent: "q")
+        quitItem.target = self
+        quitItem.keyEquivalentModifierMask = .command
+        menu.addItem(quitItem)
+
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.maxY), in: button)
+    }
+    @objc private func openPopoverFromMenu() {
+        if visiblePopover == nil { show(desiredMode) }
+    }
+    @objc private func toggleCompactMode(_ item: NSMenuItem) {
+        preferences.compact.toggle()
+    }
+    @objc private func toggleContinuousPlayback(_ item: NSMenuItem) {
+        preferences.continuousPlayback.toggle()
+    }
+    @objc private func toggleAnimations(_ item: NSMenuItem) {
+        preferences.animations.toggle()
+    }
+    @objc private func setAppearance(_ item: NSMenuItem) {
+        guard let rawValue = item.representedObject as? String,
+              let mode = AppearanceMode(rawValue: rawValue) else { return }
+        preferences.appearance = mode
+    }
+    @objc private func openSettingsFromMenu() {
+        preferences.showingSettings = true
+        preferences.compact = false
+        if visiblePopover == nil {
+            show(.expanded)
+        } else if visiblePopover !== expandedPopover {
+            switchMode()
+        }
+    }
+    @objc private func quitFromMenu() {
+        NSApp.terminate(nil)
     }
     private func show(_ mode: PopoverMode) {
         guard let button = statusItem.button else { return }
@@ -118,6 +207,21 @@ enum PopoverLayout {
             self.pendingTransition = nil
             self.show(mode)
         }
+    }
+    private func handleTrackSelection(_ selecting: Bool) {
+        if selecting {
+            guard visiblePopover != nil else { return }
+            compactPopover.behavior = .applicationDefined
+            expandedPopover.behavior = .applicationDefined
+            return
+        }
+
+        guard compactPopover.behavior == .applicationDefined || expandedPopover.behavior == .applicationDefined else { return }
+        compactPopover.behavior = .transient
+        expandedPopover.behavior = .transient
+        guard let visible = visiblePopover else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        visible.contentViewController?.view.window?.makeKey()
     }
     func popoverDidClose(_ notification: Notification) {
         preferences.isPresented = false
@@ -173,7 +277,7 @@ enum PopoverLayout {
         let pointer = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(GetApplicationEventTarget(), { _, _, data in
             guard let data else { return OSStatus(eventNotHandledErr) }
-            let owner = Unmanaged<SpotMenuDelegate>.fromOpaque(data).takeUnretainedValue()
+            let owner = Unmanaged<PlayMenuDelegate>.fromOpaque(data).takeUnretainedValue()
             Task { @MainActor in owner.togglePopover() }
             return noErr
         }, 1, &type, pointer, &hotKeyHandler)

@@ -121,7 +121,9 @@ struct TrackRow: View {
     }
     private func play() {
         onPlay?()
+        spotify.beginTrackSelection()
         Task {
+            defer { spotify.endTrackSelection() }
             if let playAction { await playAction() }
             else { await spotify.play(track, contextURI: contextURI, following: following, contextPosition: contextPosition) }
         }

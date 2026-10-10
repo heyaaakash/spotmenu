@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement to SpotMenu
+description: Suggest an improvement to PlayMenu
 body:
   - type: textarea
     id: problem

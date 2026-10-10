@@ -1,6 +1,6 @@
 # Development
 
-SpotMenu uses Swift 6, SwiftUI, AppKit, Combine, CryptoKit, Network, and Security. It has no third-party Swift package dependencies.
+PlayMenu uses Swift 6, SwiftUI, AppKit, Combine, CryptoKit, Network, and Security. It has no third-party Swift package dependencies.
 
 ```sh
 ./Scripts/test.sh          # Isolated regression checks
@@ -15,7 +15,7 @@ Select a working Swift toolchain with `xcode-select`. The scripts honor `SDKROOT
 
 `VERSION` supplies the app version. `BUILD_NUMBER` supplies the bundle build number. Settings reads the bundled version at runtime. Generated icons, compiler output, packaged apps, and temporary render files are excluded from Git.
 
-The build queries SwiftPM for the binary directory rather than relying on a machine-specific output layout. Set `SPOTMENU_REGISTER_APP=0` in automated builds to skip refreshing Launch Services. App and ZIP verification checks the plist, signature, architecture, archive contents, and round-trip extraction. Signing is ad-hoc, without Developer ID or notarization.
+The build queries SwiftPM for the binary directory rather than relying on a machine-specific output layout. Set `PLAYMENU_REGISTER_APP=0` (the former `SPOTMENU_REGISTER_APP` name remains accepted) in automated builds to skip refreshing Launch Services. App and ZIP verification checks the plist, signature, architecture, archive contents, and round-trip extraction. Signing is ad-hoc, without Developer ID or notarization.
 
 ## Generated output layout
 
@@ -25,16 +25,16 @@ The build queries SwiftPM for the binary directory rather than relying on a mach
 dist/
   1.4.3/
     apps/
-      arm64/SpotMenu.app
-      x86_64/SpotMenu.app
+      arm64/PlayMenu.app
+      x86_64/PlayMenu.app
     packages/
-      SpotMenu-1.4.3-macos-arm64.zip
-      SpotMenu-1.4.3-macos-arm64.zip.sha256
-      SpotMenu-1.4.3-macos-x86_64.zip
-      SpotMenu-1.4.3-macos-x86_64.zip.sha256
+      PlayMenu-1.4.3-macos-arm64.zip
+      PlayMenu-1.4.3-macos-arm64.zip.sha256
+      PlayMenu-1.4.3-macos-x86_64.zip
+      PlayMenu-1.4.3-macos-x86_64.zip.sha256
     release/
-      SpotMenu-1.4.3-macos-arm64.zip
-      SpotMenu-1.4.3-macos-x86_64.zip
+      PlayMenu-1.4.3-macos-arm64.zip
+      PlayMenu-1.4.3-macos-x86_64.zip
       SHA256SUMS.txt
       BUILD_INFO.txt
       RELEASE_NOTES.md
@@ -46,9 +46,9 @@ dist/
 
 `build-app.sh` replaces only the selected version/architecture app. `package.sh` replaces only that target's working ZIP and checksum. `prepare-release.sh` builds both targets and replaces only the current version's release snapshot after all checks succeed. Its release ZIPs intentionally duplicate the working packages: later single-target builds do not change an already prepared snapshot. Prior versions and media remain untouched. A local build of the same version can differ from a published artifact; release provenance and hashes identify the actual published files.
 
-Open the native app with `open "dist/$(cat VERSION)/apps/$(uname -m)/SpotMenu.app"`. Keep launch-video sources, masters, posters, captions, and media validation together under `dist/media/<project>/`. Keep other non-release deliverables under `dist/other/<task>/`. Neither area is nested under an app version or included in binary release uploads. Older versions may contain only packages or a release snapshot.
+Open the native app with `open "dist/$(cat VERSION)/apps/$(uname -m)/PlayMenu.app"`. Keep launch-video sources, masters, posters, captions, and media validation together under `dist/media/<project>/`. Keep other non-release deliverables under `dist/other/<task>/`. Neither area is nested under an app version or included in binary release uploads. Older versions may contain only packages or a release snapshot.
 
-For isolated verification, set `SPOTMENU_DIST_ROOT` to a separate absolute directory before running the scripts. The same version/type layout is used there, and existing local release snapshots are preserved. All of `dist/` remains ignored by Git. Compiler caches stay in `.build/`.
+For isolated verification, set `PLAYMENU_DIST_ROOT` (also accepts the former `SPOTMENU_DIST_ROOT`) to a separate absolute directory before running the scripts. The same version/type layout is used there, and existing local release snapshots are preserved. All of `dist/` remains ignored by Git. Compiler caches stay in `.build/`.
 
 Existing flat outputs and `release-<version>` folders were reorganized without changing their archive bytes. Historical validation entries retain the original paths as records of the commands at that time; use the layout above to locate those files now. The launch videos are in `dist/media/`, independent of the app version. Their historical validation records may mention earlier locations.
 
@@ -56,24 +56,24 @@ Existing flat outputs and `release-<version>` folders were reorganized without c
 
 | Path | Purpose |
 | --- | --- |
-| `Sources/SpotMenu/SpotMenuApp.swift` | App lifecycle, menu bar popovers, shortcuts, and appearance |
-| `Sources/SpotMenu/PlaybackMonitor.swift` | App-lifetime detection, bounded desktop event parsing, wake/network hints, and polling |
-| `Sources/SpotMenu/SpotifyService.swift` | PKCE authorization, Web API requests, command ordering, recovery |
-| `Sources/SpotMenu/AppState.swift` | Persisted preferences and optimistic player state |
-| `Sources/SpotMenu/Infrastructure.swift` | Library/artwork caches, desktop Automation, responsiveness logs |
-| `Sources/SpotMenu/ContentView.swift` | Onboarding and Home, Search, Library, and Queue |
-| `Sources/SpotMenu/PlayerViews.swift` | Playback, seek, and volume controls |
+| `Sources/PlayMenu/PlayMenuApp.swift` | App lifecycle, menu bar popovers, shortcuts, and appearance |
+| `Sources/PlayMenu/PlaybackMonitor.swift` | App-lifetime detection, bounded desktop event parsing, wake/network hints, and polling |
+| `Sources/PlayMenu/SpotifyService.swift` | PKCE authorization, Web API requests, command ordering, recovery |
+| `Sources/PlayMenu/AppState.swift` | Persisted preferences and optimistic player state |
+| `Sources/PlayMenu/Infrastructure.swift` | Library/artwork caches, desktop Automation, responsiveness logs |
+| `Sources/PlayMenu/ContentView.swift` | Onboarding and Home, Search, Library, and Queue |
+| `Sources/PlayMenu/PlayerViews.swift` | Playback, seek, and volume controls |
 | `AudioAnalysis.swift`, `SpotifyAudioCapture.swift`, `AudioVisualizer.swift`, `VisualizerViews.swift` | Spotify process tap, DSP, capture lifecycle, and visualization UI |
-| `Sources/SpotMenu/SettingsView.swift` | Appearance, playback, privacy, and account settings |
-| `Sources/SpotMenu/Components.swift`, `Motion.swift` | Shared native controls, colors, and motion |
-| `Tests/SpotMenuTests/` | Isolated regressions and screenshot renderer |
+| `Sources/PlayMenu/SettingsView.swift` | Appearance, playback, privacy, and account settings |
+| `Sources/PlayMenu/Components.swift`, `Motion.swift` | Shared native controls, colors, and motion |
+| `Tests/PlayMenuTests/` | Isolated regressions and screenshot renderer |
 | `Resources/` | Source app icon; derived icons are generated during builds |
 
 ## Continuous playback
 
-With **Continue searched songs** enabled (the default), selecting a search result starts its album at that exact track using Spotify's documented [`context_uri` and `offset` fields](https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback). Selecting a track inside an album or playlist keeps that collection and its selected position, including repeated tracks. Liked Songs starts a selected track at its album context using its URI offset (no following tracks are added to that playback request); Queue selections retain up to 99 following loaded songs in order. Context and URI-list playback continue on the Spotify device even while SpotMenu is closed; no background timer tries to restart paused music. The desktop Automation fallback also keeps album/playlist context.
+With **Continue searched songs** enabled (the default), selecting a search result starts its album at that exact track using Spotify's documented [`context_uri` and `offset` fields](https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback). Selecting a track inside an album or playlist keeps that collection and its selected position, including repeated tracks. Liked Songs starts a selected track at its album context using its URI offset (no following tracks are added to that playback request); Queue selections retain up to 99 following loaded songs in order. Context and URI-list playback continue on the Spotify device even while PlayMenu is closed; no background timer tries to restart paused music. The desktop Automation fallback also keeps album/playlist context.
 
-For Spotify's own recommendations after the collection, enable **Autoplay** in Spotify Settings on the playback device. [Spotify's Autoplay guide](https://support.spotify.com/us/article/autoplay/) explains where to find it. SpotMenu cannot read or change this setting through the public Web API. New/development apps cannot call the [Recommendations endpoint](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api), so SpotMenu leaves personalized recommendations to Spotify rather than claiming to generate native Song Radio. If a liked track has no album metadata, its selection contains only that track; continuation then depends on Spotify Autoplay.
+For Spotify's own recommendations after the collection, enable **Autoplay** in Spotify Settings on the playback device. [Spotify's Autoplay guide](https://support.spotify.com/us/article/autoplay/) explains where to find it. PlayMenu cannot read or change this setting through the public Web API. New/development apps cannot call the [Recommendations endpoint](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api), so PlayMenu leaves personalized recommendations to Spotify rather than claiming to generate native Song Radio. If a liked track has no album metadata, its selection contains only that track; continuation then depends on Spotify Autoplay.
 
 ## Regression checks
 
@@ -93,9 +93,9 @@ The local feedback check enforces a 100 ms budget for the mocked control update.
 
 GitHub Actions is disabled and no workflow files are maintained. Run `./Scripts/verify.sh` before pushing; add `--screenshots` when previews need refreshing. `./Scripts/prepare-release.sh` performs the checks and previews, then builds both architectures sequentially in separate SwiftPM scratch directories. ZIPs, aggregate checksums, copied release notes, and build provenance are staged in `dist/<version>/release/`.
 
-`SPOTMENU_ARCH=arm64 ./Scripts/package.sh` or `SPOTMENU_ARCH=x86_64 ./Scripts/package.sh` selects a target with a macOS 14 deployment triple. Without this variable, the host architecture is used. Cross-compilation verifies the target binary and packaging, but cannot establish runtime behavior on the other architecture. Run the harness and open the package on a physical Intel Mac before claiming Intel runtime validation.
+`PLAYMENU_ARCH=arm64 ./Scripts/package.sh` or `PLAYMENU_ARCH=x86_64 ./Scripts/package.sh` selects a target with a macOS 14 deployment triple. Without this variable, the host architecture is used. Cross-compilation verifies the target binary and packaging, but cannot establish runtime behavior on the other architecture. Run the harness and open the package on a physical Intel Mac before claiming Intel runtime validation.
 
-The native snapshot fixture requires working macOS graphics. An explicitly requested `SPOTMENU_SKIP_UI_RENDER=1 ./Scripts/test.sh` can diagnose a graphics-limited host; the harness reports its skipped render separately. Release preparation refuses this setting and requires all local checks. Historical hosted-runner results remain in [VALIDATION.md](VALIDATION.md).
+The native snapshot fixture requires working macOS graphics. An explicitly requested `PLAYMENU_SKIP_UI_RENDER=1 ./Scripts/test.sh` can diagnose a graphics-limited host; the harness reports its skipped render separately. Release preparation refuses this setting and requires all local checks. Historical hosted-runner results remain in [VALIDATION.md](VALIDATION.md).
 
 ## Automatic playback detection
 

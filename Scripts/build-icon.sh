@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "${0:A:h}/.."
 source_icon="${PWD}/Resources/AppIcon.png"
-iconset="${PWD}/Resources/SpotMenu.iconset"
+iconset="${PWD}/Resources/PlayMenu.iconset"
 mkdir -p "${iconset}"
 
 # macOS requires square images at both standard and Retina resolutions.
@@ -16,5 +16,5 @@ for size in 16 32 128 256 512; do
     --out "${iconset}/icon_${size}x${size}@2x.png" >/dev/null
 done
 
-iconutil --convert icns "${iconset}" --output "${PWD}/Resources/SpotMenu.icns"
-echo "Built Resources/SpotMenu.iconset and Resources/SpotMenu.icns"
+iconutil --convert icns "${iconset}" --output "${PWD}/Resources/PlayMenu.icns"
+echo "Built Resources/PlayMenu.iconset and Resources/PlayMenu.icns"

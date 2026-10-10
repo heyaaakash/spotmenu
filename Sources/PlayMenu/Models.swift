@@ -46,6 +46,7 @@ struct Page<T: Decodable & Sendable>: Decodable, Sendable {
     let total: Int?
 }
 struct SavedTrack: Decodable, Sendable { let track: Track }
+struct PlayableTrack: Decodable, Sendable { let uri: String?; let is_playable: Bool? }
 struct RecentTrack: Decodable, Sendable { let track: Track }
 struct PlaylistItem: Decodable, Sendable { let item: Track?; let track: Track?; var resolved: Track? { item ?? track } }
 struct SearchResults: Decodable, Sendable { let tracks: Page<Track>?; let artists: Page<Artist>?; let albums: Page<Album>?; let playlists: Page<Playlist?>? }
@@ -74,7 +75,13 @@ struct TokenResponse: Decodable, Sendable { let access_token: String; let token_
 
 enum APIError: LocalizedError {
     case message(String)
-    case expired, offline, noDevice, forbidden, rateLimited(Int)
+    case expired, offline, noDevice, forbidden, ambiguousResponse, rateLimited(Int)
+    var allowsDesktopFallback: Bool {
+        switch self {
+        case .noDevice, .forbidden, .message: true
+        case .expired, .offline, .ambiguousResponse, .rateLimited: false
+        }
+    }
     var errorDescription: String? {
         switch self {
         case .message(let value): value
@@ -82,9 +89,14 @@ enum APIError: LocalizedError {
         case .offline: "You're offline. Your cached library is still available."
         case .noDevice: "Choose a device or open Spotify to start playing."
         case .forbidden: "Spotify denied this action. Check your account's Premium and app access."
+        case .ambiguousResponse: "Spotify’s response was unclear. Refresh playback before retrying."
         case .rateLimited(let seconds): "Spotify needs a breather. Try again in \(seconds) seconds."
         }
     }
+}
+
+func allowsDesktopFallback(after error: Error) -> Bool {
+    (error as? APIError)?.allowsDesktopFallback ?? false
 }
 
 enum SearchEntry: Identifiable, Sendable {

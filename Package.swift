@@ -2,8 +2,8 @@
 import PackageDescription
 
 let package = Package(
-    name: "SpotMenu",
+    name: "PlayMenu",
     platforms: [.macOS(.v14)],
-    products: [.executable(name: "SpotMenu", targets: ["SpotMenu"])],
-    targets: [.executableTarget(name: "SpotMenu", path: "Sources/SpotMenu")]
+    products: [.executable(name: "PlayMenu", targets: ["PlayMenu"])],
+    targets: [.executableTarget(name: "PlayMenu", path: "Sources/PlayMenu")]
 )

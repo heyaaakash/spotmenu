@@ -44,7 +44,7 @@ enum Palette {
     static let onBrand = Color(red: 0.035, green: 0.095, blue: 0.050)
 
     private static func adaptive(_ name: String, light: (Double, Double, Double), dark: (Double, Double, Double), lightAlpha: Double = 1, darkAlpha: Double = 1) -> Color {
-        Color(nsColor: NSColor(name: NSColor.Name("SpotMenu.\(name)")) { appearance in
+        Color(nsColor: NSColor(name: NSColor.Name("PlayMenu.\(name)")) { appearance in
             let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
             let rgb = isDark ? dark : light
             return NSColor(srgbRed: rgb.0, green: rgb.1, blue: rgb.2, alpha: isDark ? darkAlpha : lightAlpha)

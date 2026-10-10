@@ -2,8 +2,8 @@
 .build/
 .swiftpm/
 dist/
-Resources/SpotMenu.iconset/
-Resources/SpotMenu.icns
+Resources/PlayMenu.iconset/
+Resources/PlayMenu.icns
 
 # macOS and local tooling
 .DS_Store

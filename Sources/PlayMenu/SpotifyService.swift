@@ -34,6 +34,7 @@ import Security
     @Published var savedNext: String?
     @Published var notice: Notice?
     @Published var cachedDate: Date?
+    @Published private(set) var selectingTrack = false
     let visualizer: AudioVisualizer
     let player: PlayerState
     let preferences: AppPreferences
@@ -76,9 +77,12 @@ import Security
     private var savedChecks: [String: Bool] = [:]
     private var savedCheckDates: [String: Date] = [:]
     private var pendingSaves: Set<String> = []
+    private var trackSelectionCount = 0
     private var saveCounts: [String: Int] = [:]
     private var saveVersions: [String: Int] = [:]
     private var confirmedSaved: [String: Bool] = [:]
+    private var resolvedTrackURIs: [String: String] = [:]
+    private var unavailableTrackURIs: Set<String> = []
     private enum MutationField: Hashable { case playback, position, volume, shuffle, repeatMode }
     private struct Mutation { let field: MutationField; let version: Int; let value: Playback? }
     private var mutationCounts: [MutationField: Int] = [:]
@@ -155,7 +159,7 @@ import Security
                 guard let data, let request = String(data: data, encoding: .utf8),
                       let path = request.components(separatedBy: " ").dropFirst().first,
                       path.hasPrefix("/callback") else { connection.cancel(); return }
-                let html = "<html><body style='background:#101410;color:white;font:18px system-ui;text-align:center;padding:80px'><h1>Return to SpotMenu</h1><p>You can close this tab. Your menu bar app will finish connecting.</p></body></html>"
+                let html = "<html><body style='background:#101410;color:white;font:18px system-ui;text-align:center;padding:80px'><h1>Return to PlayMenu</h1><p>You can close this tab. Your menu bar app will finish connecting.</p></body></html>"
                 let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(html.utf8.count)\r\nConnection: close\r\n\r\n" + html
                 connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
                 Task { @MainActor in
@@ -254,6 +258,7 @@ import Security
         player.apply(nil); player.savedIDs = []; player.pendingCommands = 0
         profile = nil; playlists = []; saved = []; recent = []; topTracks = []; queue = []; search = nil
         savedChecks = [:]; savedCheckDates = [:]; pendingSaves = []; saveCounts = [:]; confirmedSaved = [:]
+        resolvedTrackURIs = [:]; unavailableTrackURIs = []
         mutationCounts = [:]; confirmedPlayback = [:]; commandTail = nil
         details = [:]; cachedDate = nil; devices = []; notice = nil; error = nil; offline = false
         playlistNext = nil; savedNext = nil; closeDetail(); player.transferringID = nil
@@ -323,6 +328,7 @@ import Security
             case 429:
                 let seconds = Int(response.value(forHTTPHeaderField: "Retry-After") ?? "10") ?? 10
                 rateLimitedUntil = Date().addingTimeInterval(Double(seconds)); throw APIError.rateLimited(seconds)
+            case 408, 500...599: throw APIError.ambiguousResponse
             default: throw APIError.message("Spotify could not complete that request (\(status)). Try again.")
             }
         }
@@ -568,6 +574,17 @@ import Security
         case .artist(let artist): if let uri = artist.uri { openSpotify(uri) }
         }
     }
+
+    func beginTrackSelection() {
+        trackSelectionCount += 1
+        selectingTrack = true
+    }
+
+    func endTrackSelection() {
+        trackSelectionCount = max(0, trackSelectionCount - 1)
+        selectingTrack = trackSelectionCount > 0
+    }
+
     func openSpotify(_ uri: String?) {
         guard let uri else { return }
         let parts = uri.split(separator: ":")
@@ -589,8 +606,7 @@ import Security
             do { let _: Empty? = try await self.request(path, method: method, query: query, body: body); self.error = nil; success = true }
             catch {
                 guard epoch == self.sessionRevision, !Task.isCancelled else { return false }
-                let canFallback: Bool
-                switch error as? APIError { case .expired, .rateLimited: canFallback = false; default: canFallback = true }
+                let canFallback = allowsDesktopFallback(after: error)
                 if let localFallback, canFallback, self.preferences.desktopFallback, await self.local.execute(localFallback) { success = true; self.error = nil }
                 else { self.report(error) }
             }
@@ -642,6 +658,10 @@ import Security
         complete(mutation, success: await send(playing ? "/me/player/pause" : "/me/player/play", method: "PUT", localFallback: playing ? "pause" : "play"))
     }
     func playLikedSong(_ track: Track) async {
+        guard let playableTrack = await resolvePlayableTrack(track) else {
+            showNotice("This song isn’t available to play in your Spotify market.", icon: "exclamationmark.triangle")
+            return
+        }
         let following: [Track]
         if let index = saved.firstIndex(where: { $0.stableID == track.stableID }) {
             following = Array(saved.dropFirst(index + 1).prefix(99))
@@ -652,27 +672,52 @@ import Security
         // Spotify can shuffle a URI-list launch before honoring its first item.
         // Hold shuffle off until the selected song is confirmed, then restore it.
         let restoreShuffle = player.playback?.shuffle_state == true
-        if restoreShuffle, !(await setShuffleState(false)) {
-            let started = await play(track, following: [])
-            if started { _ = await confirmPlaybackStarted(track) }
-            return
-        }
-
-        let started = await play(track, following: following)
+        let shuffleDisabled: Bool
+        if restoreShuffle { shuffleDisabled = await setShuffleState(false) }
+        else { shuffleDisabled = true }
+        // If Spotify refuses the shuffle change, a one-item start avoids its
+        // shuffle order from replacing the user’s selected track.
+        let selectedQueue = shuffleDisabled ? following : []
+        let started = await play(playableTrack, following: selectedQueue)
         guard started else {
-            if restoreShuffle { _ = await setShuffleState(true) }
+            if restoreShuffle && shuffleDisabled { _ = await setShuffleState(true) }
             return
         }
-        var confirmed = await confirmPlaybackStarted(track)
-        if confirmed == false {
+        var confirmed = await confirmPlaybackStarted(playableTrack)
+        if confirmed == false, !selectedQueue.isEmpty {
             // The list can be rejected or reordered by Spotify; retry the exact URI alone.
-            let retried = await play(track, following: [])
-            if retried { confirmed = await confirmPlaybackStarted(track) }
+            let retried = await play(playableTrack, following: [])
+            if retried { confirmed = await confirmPlaybackStarted(playableTrack) }
         }
-        if restoreShuffle { _ = await setShuffleState(true) }
+        if restoreShuffle && shuffleDisabled { _ = await setShuffleState(true) }
         if confirmed == false {
             showNotice("Spotify couldn’t start that song. It may be unavailable on this device.", icon: "exclamationmark.triangle")
         }
+    }
+    private func resolvePlayableTrack(_ track: Track) async -> Track? {
+        guard let uri = track.uri else { return nil }
+        guard let cachedURI = resolvedTrackURIs[uri] else {
+            if unavailableTrackURIs.contains(uri) { return nil }
+            let parts = uri.split(separator: ":")
+            guard parts.count == 3, parts[0] == "spotify", parts[1] == "track" else { return track }
+            do {
+                let playable: PlayableTrack? = try await request("/tracks/\(parts[2])", query: [.init(name: "market", value: "from_token")])
+                if playable?.is_playable == false {
+                    unavailableTrackURIs.insert(uri)
+                    return nil
+                }
+                let resolvedURI = playable?.uri ?? uri
+                resolvedTrackURIs[uri] = resolvedURI
+                return trackWithURI(track, resolvedURI)
+            } catch {
+                // Keep playback available if metadata lookup is temporarily unavailable.
+                return track
+            }
+        }
+        return trackWithURI(track, cachedURI)
+    }
+    private func trackWithURI(_ track: Track, _ uri: String) -> Track {
+        Track(id: track.id, name: track.name, uri: uri, duration_ms: track.duration_ms, artists: track.artists, album: track.album)
     }
     private func confirmPlaybackStarted(_ track: Track) async -> Bool? {
         for _ in 0..<3 {
@@ -719,8 +764,16 @@ import Security
         return success
     }
     func playCollection() async { if let first = detailTracks.first { await play(first, contextURI: detailURI) } }
-    func next() async { await send("/me/player/next", method: "POST", localFallback: "next track") }
-    func previous() async { await send("/me/player/previous", method: "POST", localFallback: "previous track") }
+    func next() async { await skipTrack(path: "/me/player/next", fallback: "next track") }
+    func previous() async { await skipTrack(path: "/me/player/previous", fallback: "previous track") }
+    private func skipTrack(path: String, fallback: String) async {
+        // A playback read started before the skip can return the old paused
+        // track after the command completes. Invalidate it before issuing skip.
+        player.revision += 1
+        desktopEvent = nil
+        desktopEventUntil = .distantPast
+        _ = await send(path, method: "POST", localFallback: fallback)
+    }
     func seek(_ milliseconds: Int) async {
         let position = max(0, milliseconds), mutation = optimistic(.position) { $0.progress_ms = position }
         complete(mutation, success: await send("/me/player/seek", method: "PUT", query: [.init(name: "position_ms", value: String(position))], localFallback: "set player position to \(position / 1000)"))

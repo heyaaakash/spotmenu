@@ -13,7 +13,7 @@ enum AudioCaptureError: LocalizedError {
         case .unsupported: "Live audio needs macOS 14.2 or later."
         case .spotifyNotRunning: "Open the Spotify desktop app and play music on this Mac."
         case .format: "Spotify’s audio format is unavailable. Try another output device."
-        case .operation(let status): "Audio access is unavailable (\(status)). Allow SpotMenu in System Settings → Privacy & Security → Screen & System Audio Recording, then retry."
+        case .operation(let status): "Audio access is unavailable (\(status)). Allow PlayMenu in System Settings → Privacy & Security → Screen & System Audio Recording, then retry."
         }
     }
 }
@@ -22,7 +22,7 @@ actor SpotifyAudioCapture: AudioCapturing {
     private var tap: AudioObjectID = 0
     private var device: AudioObjectID = 0
     private var ioProc: AudioDeviceIOProcID?
-    private let queue = DispatchQueue(label: "com.spotmenu.audio-analysis", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.playmenu.audio-analysis", qos: .userInitiated)
 
     func start(onFrame: @escaping @Sendable (AudioFrame) -> Void) throws {
         stop()
@@ -31,7 +31,7 @@ actor SpotifyAudioCapture: AudioCapturing {
             let processes = try spotifyProcesses()
             guard !processes.isEmpty else { throw AudioCaptureError.spotifyNotRunning }
             let description = CATapDescription(stereoMixdownOfProcesses: processes)
-            description.name = "SpotMenu Spotify Visualizer"
+            description.name = "PlayMenu Spotify Visualizer"
             description.uuid = UUID()
             description.isPrivate = true
             description.muteBehavior = .unmuted
@@ -44,8 +44,8 @@ actor SpotifyAudioCapture: AudioCapturing {
                   format.mFormatFlags & kAudioFormatFlagIsFloat != 0,
                   format.mBitsPerChannel == 32, format.mSampleRate >= 8000 else { throw AudioCaptureError.format }
             let composition: [String: Any] = [
-                kAudioAggregateDeviceNameKey: "SpotMenu Audio Analysis",
-                kAudioAggregateDeviceUIDKey: "com.spotmenu.visualizer.\(UUID().uuidString)",
+                kAudioAggregateDeviceNameKey: "PlayMenu Audio Analysis",
+                kAudioAggregateDeviceUIDKey: "com.playmenu.visualizer.\(UUID().uuidString)",
                 kAudioAggregateDeviceIsPrivateKey: true,
                 kAudioAggregateDeviceIsStackedKey: false,
                 kAudioAggregateDeviceTapAutoStartKey: true,

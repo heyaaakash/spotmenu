@@ -6,7 +6,7 @@ if [[ -z "${SDKROOT:-}" && -d /Library/Developer/CommandLineTools/SDKs/MacOSX26.
   export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
 fi
 export SDKROOT="${SDKROOT:-$(xcrun --show-sdk-path)}"
-export CLANG_MODULE_CACHE_PATH="${TMPDIR:-/private/tmp}/spotmenu-clang-cache"
+export CLANG_MODULE_CACHE_PATH="${TMPDIR:-/private/tmp}/playmenu-clang-cache"
 
 source ./Scripts/dist-paths.sh
 build_number="$(<BUILD_NUMBER)"
@@ -16,31 +16,31 @@ build_args=(--disable-sandbox --scratch-path ".build/release-${architecture}" -c
 ./Scripts/build-icon.sh
 swift build "${build_args[@]}" -debug-info-format none
 binary_dir="$(swift build "${build_args[@]}" --show-bin-path)"
-[[ "$(lipo -archs "${binary_dir}/SpotMenu")" == "$architecture" ]] || { echo "Built architecture does not match $architecture" >&2; exit 1; }
-stage="$(mktemp -d "${TMPDIR:-/private/tmp}/spotmenu-bundle.XXXXXX")"
+[[ "$(lipo -archs "${binary_dir}/PlayMenu")" == "$architecture" ]] || { echo "Built architecture does not match $architecture" >&2; exit 1; }
+stage="$(mktemp -d "${TMPDIR:-/private/tmp}/playmenu-bundle.XXXXXX")"
 trap 'rm -rf -- "$stage"' EXIT
-bundle="${stage}/SpotMenu.app"
+bundle="${stage}/PlayMenu.app"
 mkdir -p "${bundle}/Contents/MacOS" "${bundle}/Contents/Resources"
-cp "${binary_dir}/SpotMenu" "${bundle}/Contents/MacOS/SpotMenu"
-cp Resources/SpotMenu.icns "${bundle}/Contents/Resources/SpotMenu.icns"
+cp "${binary_dir}/PlayMenu" "${bundle}/Contents/MacOS/PlayMenu"
+cp Resources/PlayMenu.icns "${bundle}/Contents/Resources/PlayMenu.icns"
 cp LICENSE "${bundle}/Contents/Resources/LICENSE.txt"
 cat > "${bundle}/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleName</key><string>SpotMenu</string>
-  <key>CFBundleDisplayName</key><string>SpotMenu</string>
+  <key>CFBundleName</key><string>PlayMenu</string>
+  <key>CFBundleDisplayName</key><string>PlayMenu</string>
   <key>CFBundleIdentifier</key><string>com.spotmenu.app</string>
-  <key>CFBundleExecutable</key><string>SpotMenu</string>
-  <key>CFBundleIconFile</key><string>SpotMenu.icns</string>
+  <key>CFBundleExecutable</key><string>PlayMenu</string>
+  <key>CFBundleIconFile</key><string>PlayMenu.icns</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${version}</string>
   <key>CFBundleVersion</key><string>${build_number}</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSAudioCaptureUsageDescription</key><string>SpotMenu analyzes Spotify audio on this Mac to animate its waveform and detect musical pulses. Audio stays in memory and is never recorded or uploaded.</string>
-  <key>NSAppleEventsUsageDescription</key><string>SpotMenu controls playback in Spotify when Spotify's Web API cannot reach the active device.</string>
+  <key>NSAudioCaptureUsageDescription</key><string>PlayMenu analyzes Spotify audio on this Mac to animate its waveform and detect musical pulses. Audio stays in memory and is never recorded or uploaded.</string>
+  <key>NSAppleEventsUsageDescription</key><string>PlayMenu controls playback in Spotify when Spotify's Web API cannot reach the active device.</string>
 </dict></plist>
 PLIST
 plutil -lint "${bundle}/Contents/Info.plist"
@@ -52,7 +52,7 @@ mv "${bundle}" "${app}"
 # Finder can keep a cached icon when only files inside an existing app change.
 touch "${app}"
 registrar="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
-if [[ "${SPOTMENU_REGISTER_APP:-1}" == 1 && -x "${registrar}" ]]; then
+if [[ "${PLAYMENU_REGISTER_APP:-${SPOTMENU_REGISTER_APP:-1}}" == 1 && -x "${registrar}" ]]; then
   "${registrar}" -f "${app}" || echo "Finder registration unavailable; the app bundle was built successfully." >&2
 fi
 echo "Built ${app}"

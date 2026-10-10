@@ -116,7 +116,7 @@ struct DesktopPlaybackEvent: Sendable {
             network.pathUpdateHandler = { [weak self] path in
                 if path.status == .satisfied { Task { @MainActor [weak self] in self?.refreshSoon() } }
             }
-            network.start(queue: DispatchQueue(label: "com.spotmenu.playback-network"))
+            network.start(queue: DispatchQueue(label: "com.playmenu.playback-network"))
             self.network = network
         }
         pollingTask = Task { [weak self] in

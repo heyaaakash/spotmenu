@@ -61,7 +61,7 @@ private struct AppHeader: View {
     var body: some View {
         HStack(spacing: 9) {
             ZStack { Circle().fill(Palette.brand.gradient).frame(width: 27, height: 27); PlayingWaveform(playing: player.playback?.is_playing == true, color: Palette.onBrand, width: 15, height: 17) }
-            Text("spotmenu").font(.system(size: 18, weight: .heavy, design: .rounded)).tracking(-0.7)
+            Text("playmenu").font(.system(size: 18, weight: .heavy, design: .rounded)).tracking(-0.7)
             Spacer()
             if compact, let error = spotify.error { IconButton(icon: spotify.offline ? "wifi.slash" : "exclamationmark.circle", label: error) { preferences.compact = false } }
             if !compact { IconButton(icon: "magnifyingglass", label: "Search · ⌘K") { spotify.closeDetail(); preferences.focusSearch() } }

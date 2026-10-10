@@ -17,13 +17,13 @@ These features are implemented. Automated checks and live validation are recorde
 - **Music controls:** iPhone-inspired scrubbers expand their track and thumb while interacting and move smoothly during playback. Drag changes stay local until release; keyboard and accessibility adjustments are supported.
 - **Native details:** full-width rows, bounded playlist tiles, current-track states, and accessible control labels. Device lists scroll within the menu. Reduce Motion replaces springs with short fades and freezes decorative playback animations.
 
-Playback monitoring runs for the app’s lifetime. Spotify desktop notifications provide prompt track/play/pause updates on receipt. Backup API checks run every two seconds while the menu is open, every five seconds while playing in the background, and every ten seconds when idle in the background. Failures back off, and rate limits take priority. The visual progress timer runs only while the menu is open. Continuous visual animations stop when the menu is closed, their player mode is hidden, music is paused, or Reduce Motion is enabled. Player animations also stop behind Settings and Devices. By default, equalizer bars reflect playback state. With local audio capture enabled, the progress-bar waveform, small player indicators, and artwork pulses react to measured Spotify audio; header and list indicators remain decorative. Audio analysis runs on a dedicated serial queue, with capture frames capped at 30 per second. Only the small waveform draws at up to 60 frames per second while active. Artwork processing, cache I/O, JSON decoding, and local Spotify Automation run away from the UI thread. Popover presentation timing is recorded through OSLog under subsystem `com.spotmenu.app`, category `Responsiveness`.
+Playback monitoring runs for the app’s lifetime. Spotify desktop notifications provide prompt track/play/pause updates on receipt. Backup API checks run every two seconds while the menu is open, every five seconds while playing in the background, and every ten seconds when idle in the background. Failures back off, and rate limits take priority. The visual progress timer runs only while the menu is open. Continuous visual animations stop when the menu is closed, their player mode is hidden, music is paused, or Reduce Motion is enabled. Player animations also stop behind Settings and Devices. By default, equalizer bars reflect playback state. With local audio capture enabled, the progress-bar waveform, small player indicators, and artwork pulses react to measured Spotify audio; header and list indicators remain decorative. Audio analysis runs on a dedicated serial queue, with capture frames capped at 30 per second. Only the small waveform draws at up to 60 frames per second while active. Artwork processing, cache I/O, JSON decoding, and local Spotify Automation run away from the UI thread. Popover presentation timing is recorded through OSLog under subsystem `com.playmenu.app`, category `Responsiveness`.
 
 ## Keyboard shortcuts
 
 | Shortcut | Action |
 | --- | --- |
-| ⌘⇧Space | Open or close SpotMenu globally |
+| ⌘⇧Space | Open or close PlayMenu globally |
 | ⌘K | Expand and focus Search |
 | ⌘, | Open Settings in the expanded menu |
 | ↑ / ↓ | Select a search result |
@@ -31,7 +31,7 @@ Playback monitoring runs for the app’s lifetime. Spotify desktop notifications
 | Space | Play/pause when not typing |
 | Escape | Close an overlay, return from a collection, or dismiss the menu |
 
-If another app has claimed ⌘⇧Space, SpotMenu reports that the shortcut is unavailable.
+If another app has claimed ⌘⇧Space, PlayMenu reports that the shortcut is unavailable.
 
 ## Music visuals
 

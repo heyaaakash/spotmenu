@@ -23,7 +23,7 @@ private final class PreviewProtocol: URLProtocol, @unchecked Sendable {
         NSApp.setActivationPolicy(.prohibited)
         let output = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
-        let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("SpotMenuPreviews-\(UUID())")
+        let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("PlayMenuPreviews-\(UUID())")
         defer { try? FileManager.default.removeItem(at: temporary) }
         for (screen, scheme) in [
             ("home", ColorScheme.dark), ("home", .light),
@@ -31,7 +31,7 @@ private final class PreviewProtocol: URLProtocol, @unchecked Sendable {
             ("library", .dark), ("search", .dark),
             ("devices", .dark), ("settings", .dark), ("setup", .dark)
         ] {
-            let suite = "SpotMenuPreviews.\(UUID())"
+            let suite = "PlayMenuPreviews.\(UUID())"
             let defaults = UserDefaults(suiteName: suite)!
             defer { defaults.removePersistentDomain(forName: suite) }
             let configuration = URLSessionConfiguration.ephemeral
@@ -59,7 +59,7 @@ private final class PreviewProtocol: URLProtocol, @unchecked Sendable {
             let names = ["Midnight Drive", "Soft Focus", "Golden Hour", "A Little Further", "After the Rain"]
             let artists = ["Nightfall", "Mellow Coast", "Daylight Club", "Open Skies", "Quiet Company"]
             let tracks = names.enumerated().map { index, name in
-                let image = "https://example.invalid/spotmenu-preview/\(index)"
+                let image = "https://example.invalid/playmenu-preview/\(index)"
                 let album = Album(id: "sample-album-\(index)", name: name, uri: nil, images: [.init(url: image)], artists: nil)
                 return Track(id: "sample-\(index)", name: name, uri: "spotify:track:sample\(index)", duration_ms: 224000 + index * 11000, artists: [.init(id: nil, name: artists[index], uri: nil)], album: album)
             }
